@@ -1236,8 +1236,8 @@ const App: React.FC = () => {
             >
               À travers mon parcours, j’ai eu la chance d’explorer et de
               maîtriser diverses technologies, toujours avec la même curiosité
-              et l’envie de créer des solutions qui ont du sens et qui apportent de
-              la valeur aux utilisateurs.
+              et l’envie de créer des solutions qui ont du sens et qui apportent
+              de la valeur aux utilisateurs.
             </motion.p>
             {/* Liste des compétences */}
             <div className="flex flex-wrap justify-center gap-4">
@@ -1248,6 +1248,7 @@ const App: React.FC = () => {
                 "React",
                 "Node.js",
                 "MongoDB",
+                "MySQL",
                 "Docker",
                 "UML",
                 "SQL",
@@ -1336,8 +1337,8 @@ const App: React.FC = () => {
                   interfaces utilisateur qui en jettent. Mon parcours m’a permis
                   de construire des bases solides en programmation, et j’ai déjà
                   plusieurs projets sympas à mon actif, comme une plateforme de
-                  gestion de bibliothèque en ligne, une app de restauration
-                  avec Angular, une app mobile de gestion d'habitude avec flutter...
+                  gestion de bibliothèque en ligne, une app de restauration avec
+                  Angular, une app mobile de gestion d'habitude avec flutter...
                 </p>
                 <p
                   className={`text-lg ${
@@ -1364,8 +1365,9 @@ const App: React.FC = () => {
                   plonger dans le code. J’aime bien utiliser des outils comme
                   UML pour visualiser mes idées, et je m’assure que tout reste
                   scalable et maintenable. En dehors du dev, tu me trouveras
-                  probablement en train de suivre des séries ou d'être sur un terrain de foot ou de rêver à mon
-                  prochain voyage au Qatar – un pays qui m’inspire énormément !
+                  probablement en train de suivre des séries ou d'être sur un
+                  terrain de foot ou de rêver à mon prochain voyage au Qatar –
+                  un pays qui m’inspire énormément !
                 </p>
                 <p
                   className={`text-lg ${
@@ -1896,7 +1898,7 @@ const App: React.FC = () => {
                 <h4 className="text-lg font-semibold mb-4">Liens utiles</h4>
                 <div className="flex flex-col gap-3 items-center md:items-start">
                   <motion.a
-                    href="https://github.com/ton-profil/portfolio"
+                    href="https://github.com/adekomen/portfolio.git"
                     className="flex items-center gap-2 hover:text-cyan-200"
                     whileHover={{ scale: 1.05, x: 5 }}
                     transition={{ duration: 0.3 }}
