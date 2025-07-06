@@ -355,9 +355,9 @@ const App: React.FC = () => {
             }}
           >
             <img
-              src="/assets/fls1.png"
+              src="/assets/fls2.jpg"
               alt="ADESU-FLS"
-              className="w-full h-full rounded-full object-contain object-center"
+              className="w-full h-full rounded-full object-cover object-center"
               loading="lazy"
             />
           </motion.div>
@@ -913,7 +913,7 @@ const App: React.FC = () => {
                     transition: { duration: 0.3 },
                   }}
                 >
-                  Architecte logiciel en devenir.{" "}
+                  Architecte logiciel.{" "}
                   <span className="block text-sm text-gray-500 dark:text-gray-400 mt-2">
                     Création d'applications modernes et scalables avec{" "}
                     <motion.a
