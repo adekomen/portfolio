@@ -74,6 +74,17 @@ const projects: Project[] = [
     demo: "https://hotelbooking-psi.vercel.app/",
     image: "/assets/hotel.png",
   },
+  {
+    id: 5,
+    title: "Une application de prise de mesure",
+    description:
+      "SIZER, Une solution digitale innovante pour simplifier la prise de mesures et optimiser le travail dans le domaine de la couture",
+    longDescription:
+      "Cette solution permet aux couturiers d’enregistrer, consulter, modifier et exporter facilement les mensurations des clients, tout en intégrant des tailles standards et un système de suggestion intelligent.",
+    technologies: ["Flutter", "Dart", "Firebase", "Supabase"],
+    github: "https://github.com/adekomen/sizer_app.git",
+    image: "/assets/couturier1.png",
+  },
 ];
 
 // Composant Modal avec UML
@@ -992,7 +1003,7 @@ const App: React.FC = () => {
                 className="md:w-1/2 border-2 border-transparent rounded-lg w-full h-full overflow-hidden"
               >
                 <img
-                  src="/assets/lesaint.jpg"
+                  src="/assets/lesaint2.jpg"
                   alt="ADESU-FLS"
                   className="w-full h-full max-h-[600px] object-cover rounded-lg shadow-lg transition-all duration-300"
                   loading="lazy"
@@ -1312,7 +1323,7 @@ const App: React.FC = () => {
                 className="w-[280px] h-[360px] border-2 border-transparent rounded-lg overflow-hidden"
               >
                 <img
-                  src="/assets/lesaint2.jpg"
+                  src="/assets/lesaint4.jpg"
                   alt="Kokouvi François Adesu"
                   className="w-full h-full object-cover rounded-lg"
                   loading="lazy"
@@ -1331,7 +1342,7 @@ const App: React.FC = () => {
                     theme === "light" ? "text-gray-600" : "text-gray-300"
                   } mb-4`}
                 >
-                  Salut, moi c’est <strong>Kokouvi François Adesu</strong>, mais
+                  Salut, moi c’est <strong>Kokouvi François ADESU</strong>, mais
                   tu peux m’appeler François ! Je suis un développeur passionné
                   avec un faible pour l’architecture logicielle et les
                   interfaces utilisateur qui en jettent. Mon parcours m’a permis
@@ -1435,7 +1446,9 @@ const App: React.FC = () => {
                   </motion.h3>
                 </div>
                 <motion.p
-                  className="text-gray-600 dark:text-white"
+                  className={`${
+                    theme === "light" ? "text-gray-600" : "text-gray-300"
+                  }`}
                   whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
                 >
                   Initiation aux algorithmes et POO avec Java. Premiers projets
@@ -1492,12 +1505,14 @@ const App: React.FC = () => {
                   </motion.h3>
                 </div>
                 <motion.p
-                  className="text-gray-600 dark:text-white"
+                  className={`${
+                    theme === "light" ? "text-gray-600" : "text-gray-300"
+                  }`}
                   whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
                 >
                   Conception de systèmes modulaires avec microservices.
                   Expérience avec Docker, API REST. Développement d'applications
-                  fullstack (MERN).
+                  fullstack.
                 </motion.p>
               </motion.div>
 
@@ -1549,7 +1564,9 @@ const App: React.FC = () => {
                   </motion.h3>
                 </div>
                 <motion.p
-                  className="text-gray-600 dark:text-white"
+                  className={`${
+                    theme === "light" ? "text-gray-600" : "text-gray-300"
+                  }`}
                   whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
                 >
                   Création d'interfaces dynamiques avec React pour le Web et
