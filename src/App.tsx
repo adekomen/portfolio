@@ -1877,13 +1877,13 @@ const App: React.FC = () => {
                 <h4 className="text-lg font-semibold mb-4">Me contacter</h4>
                 <div className="flex flex-col gap-3 items-center md:items-start">
                   <motion.a
-                    href="tel:+2290144121849"
+                    href="tel:+22899553976"
                     className="flex items-center gap-2 hover:text-cyan-200"
                     whileHover={{ scale: 1.05, x: 5 }}
                     transition={{ duration: 0.3 }}
                   >
                     <Phone className="w-5 h-5" />
-                    <span>(+229) 0144121849 (Appel)</span>
+                    <span>(+228) 99553976 (Appel)</span>
                   </motion.a>
                   <motion.a
                     href="https://wa.me/+22946620072?text=Salut%20François,%20je%20viens%20de%20voir%20ton%20portfolio%20et%20j'aimerais%20discuter%20d'un%20projet%20!"
