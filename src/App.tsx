@@ -1,19 +1,32 @@
 import { useState, useEffect, FormEvent, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Code, Cpu, Smartphone, Menu, X, Phone, Mail, Github, Linkedin } from "lucide-react";
+import {
+  Code,
+  Cpu,
+  Smartphone,
+  Menu,
+  X,
+  Phone,
+  Mail,
+  Github,
+  Linkedin,
+  ExternalLink,
+  ChevronLeft,
+  ChevronRight,
+} from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
-import { Engine } from "@tsparticles/engine";
-import Particles from "@tsparticles/react";
-import { loadAll } from "@tsparticles/all";
 import emailjs from "@emailjs/browser";
 import mermaid from "mermaid";
-import "react-pdf/dist/esm/Page/AnnotationLayer.css";
-import "react-pdf/dist/esm/Page/TextLayer.css";
 
-// Initialiser Mermaid pour les diagrammes UML
+// Google Fonts injection
+const fontLink = document.createElement("link");
+fontLink.href =
+  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap";
+fontLink.rel = "stylesheet";
+document.head.appendChild(fontLink);
+
 mermaid.initialize({ startOnLoad: true });
 
-// Interface pour les projets
 interface Project {
   id: number;
   title: string;
@@ -26,7 +39,6 @@ interface Project {
   uml?: string;
 }
 
-// Données des projets
 const projects: Project[] = [
   {
     id: 1,
@@ -34,7 +46,7 @@ const projects: Project[] = [
     description:
       "Plateforme développée en PHP procédural avec architecture MVC.",
     longDescription:
-      "Gestion totale de bibliothèque en ligne qui permet de faire des achat de livre en ligne",
+      "Gestion totale de bibliothèque en ligne qui permet de faire des achats de livres en ligne.",
     technologies: ["PHP", "Bootstrap", "MySQL", "Javascript"],
     github: "https://github.com/adekomen/book-shop.git",
     demo: "http://lesaint.alwaysdata.net",
@@ -42,10 +54,10 @@ const projects: Project[] = [
   },
   {
     id: 2,
-    title: "Une application pour la restauration",
+    title: "Application de restauration",
     description:
-      "Plateforme de restauration où on peut trouver les mets du restaurant et faire une commande.",
-    longDescription: "Plateforme utilisant Angular.",
+      "Plateforme où on peut trouver les mets du restaurant et faire une commande.",
+    longDescription: "Plateforme de restauration utilisant Angular.",
     technologies: ["Angular", "Html & CSS", "Javascript"],
     github: "https://github.com/adekomen/kenfood_app.git",
     demo: "https://warm-sable-eaf70d.netlify.app/",
@@ -53,7 +65,7 @@ const projects: Project[] = [
   },
   {
     id: 3,
-    title: "Une application de suivis d'habitude",
+    title: "Suivi d'habitudes",
     description:
       "Une application Flutter pour suivre vos habitudes quotidiennes.",
     longDescription:
@@ -64,11 +76,11 @@ const projects: Project[] = [
   },
   {
     id: 4,
-    title: "Une application pour trouver les hotels",
+    title: "Recherche d'hôtels",
     description:
-      "Une application React et Nodejs pour chercher les hotels, fait avec mon equipe de dev.",
+      "Application React & Node.js pour chercher des hôtels, réalisée en équipe.",
     longDescription:
-      "Une application Fullstack fait avec React pour le Frontend, Nodejs pour le backend et MySQL pour la base de données pour gérer les recherche d'hotel en ligne.",
+      "Application Fullstack avec React, Node.js et MySQL pour gérer la recherche d'hôtels en ligne.",
     technologies: ["React", "Nodejs", "MySQL"],
     github: "https://github.com/adekomen/hotel_booking.git",
     demo: "https://hotelbooking-psi.vercel.app/",
@@ -76,1142 +88,1422 @@ const projects: Project[] = [
   },
   {
     id: 5,
-    title: "Une application de prise de mesure",
+    title: "SIZER — Prise de mesures",
     description:
-      "SIZER, Une solution digitale innovante pour simplifier la prise de mesures et optimiser le travail dans le domaine de la couture",
+      "Solution digitale innovante pour simplifier la prise de mesures en couture.",
     longDescription:
-      "Cette solution permet aux couturiers d’enregistrer, consulter, modifier et exporter facilement les mensurations des clients, tout en intégrant des tailles standards et un système de suggestion intelligent.",
+      "Permet aux couturiers d'enregistrer, consulter, modifier et exporter les mensurations des clients, avec tailles standards et suggestions intelligentes.",
     technologies: ["Flutter", "Dart", "Firebase", "Supabase"],
     github: "https://github.com/adekomen/sizer_app.git",
     image: "/assets/couturier1.png",
   },
 ];
 
-// Composant Modal avec UML
+// ─── CSS VARIABLES & GLOBAL STYLES ───────────────────────────────────────────
+const injectStyles = () => {
+  const style = document.createElement("style");
+  style.textContent = `
+    :root {
+      --bg: #0A0A0F;
+      --surface: #12121C;
+      --surface2: #1A1A2E;
+      --accent: #0FF4C6;
+      --accent2: #7B2FBE;
+      --text: #E8E8F0;
+      --text-sub: #9090A8;
+      --border: rgba(255,255,255,0.07);
+      --font-display: 'Space Grotesk', sans-serif;
+      --font-body: 'Inter', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+    }
+    .light-mode {
+      --bg: #F4F4FA;
+      --surface: #FFFFFF;
+      --surface2: #EEEEF8;
+      --accent: #0891B2;
+      --accent2: #7B2FBE;
+      --text: #0A0A1A;
+      --text-sub: #60607A;
+      --border: rgba(0,0,0,0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+    }
+    ::-webkit-scrollbar { width: 4px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 2px; }
+
+    .section-label {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      color: var(--accent);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      margin-bottom: 0.5rem;
+    }
+    .section-big-number {
+      font-family: var(--font-mono);
+      font-size: clamp(5rem, 12vw, 9rem);
+      color: var(--border);
+      font-weight: 700;
+      position: absolute;
+      right: 2rem;
+      top: 1.5rem;
+      line-height: 1;
+      pointer-events: none;
+      user-select: none;
+      letter-spacing: -0.05em;
+    }
+
+    /* ── SIDEBAR ─────────────────────────── */
+    .sidebar {
+      width: 240px;
+      background: var(--surface);
+      border-right: 1px solid var(--border);
+      height: 100vh;
+      position: fixed;
+      top: 0; left: 0;
+      display: flex;
+      flex-direction: column;
+      padding: 2rem 1.5rem;
+      z-index: 40;
+      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .sidebar-logo {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.05em;
+      margin-bottom: 2.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .sidebar-logo span.dot {
+      width: 8px; height: 8px;
+      background: var(--accent);
+      border-radius: 50%;
+      display: inline-block;
+      animation: pulse-dot 2s ease-in-out infinite;
+    }
+    @keyframes pulse-dot {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.7); }
+    }
+    .nav-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.6rem 0.75rem;
+      border-radius: 8px;
+      color: var(--text-sub);
+      text-decoration: none;
+      font-family: var(--font-body);
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.2s;
+      margin-bottom: 0.25rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .nav-link::before {
+      content: '';
+      position: absolute;
+      left: 0; top: 0; bottom: 0;
+      width: 2px;
+      background: var(--accent);
+      transform: scaleY(0);
+      transition: transform 0.2s;
+    }
+    .nav-link:hover {
+      color: var(--text);
+      background: var(--surface2);
+    }
+    .nav-link:hover::before { transform: scaleY(1); }
+    .nav-link .nav-icon {
+      font-size: 1rem;
+      width: 18px;
+      text-align: center;
+    }
+    .sidebar-socials {
+      display: flex;
+      gap: 0.75rem;
+      margin-top: auto;
+      padding-top: 1rem;
+      border-top: 1px solid var(--border);
+    }
+    .social-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-sub);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .social-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+
+    /* ── TOPBAR ──────────────────────────── */
+    .topbar {
+      position: fixed;
+      top: 0; right: 0;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      height: 56px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 30;
+      backdrop-filter: blur(12px);
+      transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
+    }
+    .topbar-quote {
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--accent);
+      opacity: 0.8;
+    }
+    .theme-toggle {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 0.3rem 0.7rem;
+      cursor: pointer;
+      color: var(--text-sub);
+      font-size: 0.85rem;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 0.4rem;
+    }
+    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+    .hamburger {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 0.4rem;
+      cursor: pointer;
+      color: var(--text);
+      display: none;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── MAIN ────────────────────────────── */
+    .main-content {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
+      padding-top: 56px;
+    }
+
+    /* ── HERO ────────────────────────────── */
+    .hero {
+      min-height: calc(100vh - 56px);
+      display: flex;
+      align-items: center;
+      padding: 4rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 4rem;
+      align-items: center;
+      width: 100%;
+      max-width: 1100px;
+    }
+    .hero-eyebrow {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--accent);
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+    }
+    .hero-name {
+      font-family: var(--font-display);
+      font-size: clamp(2.5rem, 5vw, 4rem);
+      font-weight: 700;
+      line-height: 1.05;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .hero-role {
+      font-family: var(--font-mono);
+      font-size: clamp(1rem, 2vw, 1.3rem);
+      color: var(--text-sub);
+      margin-bottom: 1.5rem;
+      min-height: 1.8em;
+    }
+    .hero-role .cursor {
+      display: inline-block;
+      width: 2px;
+      height: 1.1em;
+      background: var(--accent);
+      vertical-align: middle;
+      margin-left: 2px;
+      animation: blink 1s step-end infinite;
+    }
+    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+    .hero-desc {
+      font-size: 0.95rem;
+      color: var(--text-sub);
+      line-height: 1.7;
+      margin-bottom: 2rem;
+      max-width: 440px;
+    }
+    .hero-cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: var(--accent);
+      color: var(--bg);
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.875rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.2s;
+      letter-spacing: 0.02em;
+    }
+    .hero-cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(15,244,198,0.3);
+    }
+    .hero-cta-ghost {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      background: transparent;
+      color: var(--text-sub);
+      font-family: var(--font-display);
+      font-weight: 500;
+      font-size: 0.875rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      text-decoration: none;
+      border: 1px solid var(--border);
+      transition: all 0.2s;
+      margin-left: 0.75rem;
+    }
+    .hero-cta-ghost:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* Hero image */
+    .hero-image-wrap {
+      position: relative;
+      border-radius: 20px;
+      overflow: hidden;
+      aspect-ratio: 4/5;
+      max-height: 520px;
+    }
+    .hero-image-wrap::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15,244,198,0.12) 0%, rgba(123,47,190,0.12) 100%);
+      z-index: 1;
+      pointer-events: none;
+    }
+    .hero-image-wrap::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 20px;
+      border: 1px solid rgba(15,244,198,0.2);
+      pointer-events: none;
+      z-index: 2;
+    }
+    .hero-image-wrap img {
+      width: 100%; height: 100%;
+      object-fit: cover;
+      object-position: center top;
+      display: block;
+    }
+    /* Background glow */
+    .hero-glow {
+      position: absolute;
+      width: 500px; height: 500px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(123,47,190,0.15) 0%, transparent 70%);
+      top: -100px; right: -100px;
+      pointer-events: none;
+    }
+    .hero-glow2 {
+      position: absolute;
+      width: 300px; height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(15,244,198,0.1) 0%, transparent 70%);
+      bottom: 50px; left: 10%;
+      pointer-events: none;
+    }
+
+    /* ── SECTION BASE ────────────────────── */
+    .section {
+      padding: 5rem 3rem;
+      position: relative;
+      overflow: hidden;
+    }
+    .section-header {
+      margin-bottom: 3rem;
+      position: relative;
+    }
+    .section-title {
+      font-family: var(--font-display);
+      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
+      font-weight: 700;
+      color: var(--text);
+      line-height: 1.1;
+    }
+    .section-line {
+      width: 40px;
+      height: 3px;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      border-radius: 2px;
+      margin-top: 0.75rem;
+    }
+
+    /* ── PROJECTS ────────────────────────── */
+    .filter-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 2.5rem;
+    }
+    .filter-pill {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      padding: 0.35rem 0.9rem;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-sub);
+      cursor: pointer;
+      transition: all 0.2s;
+      letter-spacing: 0.05em;
+    }
+    .filter-pill:hover, .filter-pill.active {
+      background: var(--accent);
+      color: var(--bg);
+      border-color: var(--accent);
+    }
+    .projects-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+    }
+    .project-card {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+      cursor: pointer;
+      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
+      position: relative;
+    }
+    .project-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(15,244,198,0.3);
+      box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(15,244,198,0.1);
+    }
+    .project-img {
+      width: 100%;
+      height: 180px;
+      object-fit: cover;
+      display: block;
+      transition: transform 0.4s ease;
+    }
+    .project-card:hover .project-img { transform: scale(1.03); }
+    .project-img-wrap { overflow: hidden; position: relative; }
+    .project-img-overlay {
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(to top, rgba(10,10,15,0.8) 0%, transparent 50%);
+      opacity: 0;
+      transition: opacity 0.3s;
+      display: flex;
+      align-items: flex-end;
+      padding: 1rem;
+      gap: 0.5rem;
+    }
+    .project-card:hover .project-img-overlay { opacity: 1; }
+    .project-link-chip {
+      font-family: var(--font-mono);
+      font-size: 0.7rem;
+      padding: 0.3rem 0.6rem;
+      border-radius: 6px;
+      background: var(--accent);
+      color: var(--bg);
+      text-decoration: none;
+      display: flex; align-items: center; gap: 0.3rem;
+      transition: opacity 0.2s;
+    }
+    .project-link-chip:hover { opacity: 0.85; }
+    .project-body {
+      padding: 1.25rem 1.5rem 1.5rem;
+    }
+    .project-techs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      margin-bottom: 0.75rem;
+    }
+    .tech-badge {
+      font-family: var(--font-mono);
+      font-size: 0.67rem;
+      padding: 0.2rem 0.5rem;
+      border-radius: 4px;
+      background: var(--surface2);
+      color: var(--accent);
+      border: 1px solid rgba(15,244,198,0.2);
+      letter-spacing: 0.04em;
+    }
+    .project-title {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.4rem;
+      line-height: 1.3;
+    }
+    .project-desc {
+      font-size: 0.83rem;
+      color: var(--text-sub);
+      line-height: 1.6;
+    }
+    .pagination {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-top: 2.5rem;
+      justify-content: center;
+    }
+    .page-btn {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
+    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+    .page-info {
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+      color: var(--text-sub);
+    }
+
+    /* ── MODAL ───────────────────────────── */
+    .modal-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.7);
+      backdrop-filter: blur(4px);
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1rem;
+    }
+    .modal-box {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      max-width: 640px;
+      width: 100%;
+      max-height: 90vh;
+      overflow-y: auto;
+      padding: 2rem;
+      position: relative;
+    }
+    .modal-close {
+      position: absolute;
+      top: 1rem; right: 1rem;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      width: 32px; height: 32px;
+      cursor: pointer;
+      color: var(--text-sub);
+      display: flex; align-items: center; justify-content: center;
+      transition: all 0.2s;
+    }
+    .modal-close:hover { background: rgba(255,80,80,0.1); color: #ff5050; border-color: rgba(255,80,80,0.3); }
+
+    /* ── SKILLS ──────────────────────────── */
+    .skills-grid {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+    }
+    .skill-chip {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      transition: all 0.2s;
+      cursor: default;
+    }
+    .skill-chip:hover {
+      background: var(--surface2);
+      border-color: var(--accent);
+      color: var(--accent);
+      transform: translateY(-2px);
+    }
+    .journey-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1.5rem;
+      margin-top: 3rem;
+    }
+    .journey-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 1.75rem;
+      transition: all 0.25s;
+    }
+    .journey-card:hover {
+      transform: translateY(-4px);
+      border-color: rgba(15,244,198,0.3);
+    }
+    .journey-icon {
+      width: 44px; height: 44px;
+      border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1rem;
+    }
+    .journey-card h3 {
+      font-family: var(--font-display);
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.6rem;
+    }
+    .journey-card p {
+      font-size: 0.84rem;
+      color: var(--text-sub);
+      line-height: 1.65;
+    }
+
+    /* ── ABOUT ───────────────────────────── */
+    .about-grid {
+      display: grid;
+      grid-template-columns: 260px 1fr;
+      gap: 3rem;
+      align-items: start;
+    }
+    .about-photo {
+      border-radius: 16px;
+      overflow: hidden;
+      aspect-ratio: 3/4;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+    .about-photo::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(15,244,198,0.08) 0%, rgba(123,47,190,0.08) 100%);
+    }
+    .about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .about-text p {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      line-height: 1.8;
+      margin-bottom: 1.2rem;
+    }
+    .about-text p strong { color: var(--text); }
+    .vision-banner {
+      background: linear-gradient(135deg, rgba(15,244,198,0.08) 0%, rgba(123,47,190,0.12) 100%);
+      border: 1px solid rgba(15,244,198,0.15);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      margin-top: 2rem;
+    }
+    .vision-banner h3 {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 0.5rem;
+    }
+    .vision-banner p {
+      font-size: 0.9rem;
+      color: var(--text-sub);
+      font-style: italic;
+      line-height: 1.7;
+    }
+
+    /* ── CONTACT ─────────────────────────── */
+    .contact-layout {
+      display: grid;
+      grid-template-columns: 1fr 1.4fr;
+      gap: 4rem;
+      align-items: start;
+    }
+    .contact-info h3 {
+      font-family: var(--font-display);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.75rem;
+    }
+    .contact-info p {
+      font-size: 0.88rem;
+      color: var(--text-sub);
+      line-height: 1.75;
+      margin-bottom: 2rem;
+    }
+    .contact-links { display: flex; flex-direction: column; gap: 0.75rem; }
+    .contact-link {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-radius: 10px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      color: var(--text-sub);
+      text-decoration: none;
+      font-size: 0.85rem;
+      transition: all 0.2s;
+    }
+    .contact-link:hover { border-color: var(--accent); color: var(--text); }
+    .contact-link svg { color: var(--accent); flex-shrink: 0; }
+    .form-group { margin-bottom: 1rem; }
+    .form-label {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-sub);
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 0.4rem;
+    }
+    .form-input, .form-textarea {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 0.75rem 1rem;
+      color: var(--text);
+      font-family: var(--font-body);
+      font-size: 0.88rem;
+      outline: none;
+      transition: border-color 0.2s;
+    }
+    .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
+    .form-textarea { resize: vertical; min-height: 120px; }
+    .form-submit {
+      width: 100%;
+      background: var(--accent);
+      color: var(--bg);
+      border: none;
+      border-radius: 10px;
+      padding: 0.85rem;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.9rem;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+      margin-top: 1.25rem;
+    }
+    .form-submit:hover { box-shadow: 0 6px 20px rgba(15,244,198,0.25); transform: translateY(-1px); }
+    .form-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* ── CV ──────────────────────────────── */
+    .cv-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 1.5rem;
+    }
+    .cv-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2.5rem 3rem;
+      text-align: center;
+      max-width: 480px;
+    }
+    .cv-card h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .cv-card p { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 1.5rem; }
+    .cv-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
+    .cv-btn {
+      padding: 0.7rem 1.4rem;
+      border-radius: 8px;
+      font-family: var(--font-display);
+      font-weight: 600;
+      font-size: 0.85rem;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: all 0.2s;
+      cursor: pointer;
+      border: none;
+    }
+    .cv-btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+    }
+    .cv-btn-primary:hover { box-shadow: 0 6px 20px rgba(15,244,198,0.25); transform: translateY(-1px); }
+    .cv-btn-outline {
+      background: transparent;
+      color: var(--text-sub);
+      border: 1px solid var(--border) !important;
+    }
+    .cv-btn-outline:hover { border-color: var(--accent) !important; color: var(--accent); }
+
+    /* ── FOOTER ──────────────────────────── */
+    .footer {
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      padding: 3rem;
+    }
+    .footer-inner {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      margin-bottom: 2.5rem;
+    }
+    .footer-brand h3 {
+      font-family: var(--font-display);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 0.5rem;
+    }
+    .footer-brand p { font-size: 0.82rem; color: var(--text-sub); line-height: 1.6; }
+    .footer h4 {
+      font-family: var(--font-display);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-bottom: 1rem;
+    }
+    .footer-link {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-sub);
+      text-decoration: none;
+      font-size: 0.83rem;
+      margin-bottom: 0.6rem;
+      transition: color 0.2s;
+    }
+    .footer-link:hover { color: var(--accent); }
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 1.5rem;
+      text-align: center;
+      font-family: var(--font-mono);
+      font-size: 0.72rem;
+      color: var(--text-sub);
+    }
+    .footer-bottom span { color: var(--accent); }
+
+    /* ── RESPONSIVE ──────────────────────── */
+    @media (max-width: 1024px) {
+      .journey-cards { grid-template-columns: 1fr 1fr; }
+    }
+    @media (max-width: 768px) {
+      .hamburger { display: flex !important; }
+      .hero { padding: 2rem 1.5rem; }
+      .hero-grid { grid-template-columns: 1fr; gap: 2rem; }
+      .hero-image-wrap { max-height: 320px; }
+      .section { padding: 3.5rem 1.5rem; }
+      .about-grid { grid-template-columns: 1fr; }
+      .contact-layout { grid-template-columns: 1fr; }
+      .journey-cards { grid-template-columns: 1fr; }
+      .footer-inner { grid-template-columns: 1fr; }
+      .footer { padding: 2rem 1.5rem; }
+    }
+    @media (max-width: 480px) {
+      .hero-name { font-size: 2rem; }
+      .projects-grid { grid-template-columns: 1fr; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+    }
+
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+  `;
+  document.head.appendChild(style);
+};
+injectStyles();
+
+// ─── TYPING EFFECT HOOK ───────────────────────────────────────────────────────
+const useTyping = (phrases: string[], speed = 60, pause = 2000) => {
+  const [text, setText] = useState("");
+  const [phase, setPhase] = useState<"typing" | "pausing" | "deleting">(
+    "typing",
+  );
+  const [idx, setIdx] = useState(0);
+  const [charIdx, setCharIdx] = useState(0);
+
+  useEffect(() => {
+    let timeout: ReturnType<typeof setTimeout>;
+    const current = phrases[idx];
+    if (phase === "typing") {
+      if (charIdx < current.length) {
+        timeout = setTimeout(() => {
+          setText(current.slice(0, charIdx + 1));
+          setCharIdx((c) => c + 1);
+        }, speed);
+      } else {
+        timeout = setTimeout(() => setPhase("pausing"), pause);
+      }
+    } else if (phase === "pausing") {
+      timeout = setTimeout(() => setPhase("deleting"), 300);
+    } else {
+      if (charIdx > 0) {
+        timeout = setTimeout(() => {
+          setText(current.slice(0, charIdx - 1));
+          setCharIdx((c) => c - 1);
+        }, speed / 2);
+      } else {
+        setIdx((i) => (i + 1) % phrases.length);
+        setPhase("typing");
+      }
+    }
+    return () => clearTimeout(timeout);
+  }, [text, phase, idx, charIdx, phrases, speed, pause]);
+
+  return text;
+};
+
+// ─── PROJECT MODAL ────────────────────────────────────────────────────────────
 const ProjectModal: React.FC<{
   project: Project | null;
   onClose: () => void;
 }> = ({ project, onClose }) => {
   const mermaidRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
     if (project?.uml && mermaidRef.current) {
       mermaid.render("mermaid-diagram", project.uml).then(({ svg }) => {
-        if (mermaidRef.current) {
-          mermaidRef.current.innerHTML = svg;
-        }
+        if (mermaidRef.current) mermaidRef.current.innerHTML = svg;
       });
     }
   }, [project]);
-
   if (!project) return null;
+
   return (
-    <motion.div
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
-      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
-      onClick={onClose}
-    >
+    <AnimatePresence>
       <motion.div
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        exit={{ scale: 0.8, opacity: 0 }}
-        className="bg-white dark:bg-gray-800 text-gray-900 dark:text-white p-8 rounded-lg max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto"
-        onClick={(e) => e.stopPropagation()}
+        className="modal-backdrop"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        onClick={onClose}
       >
-        <h3 className="text-2xl font-bold mb-4">{project.title}</h3>
-        <img
-          src={project.image}
-          alt={project.title}
-          className="w-full h-auto object-cover rounded mb-4"
-          loading="lazy"
-        />
-        <p className="mb-4">{project.longDescription}</p>
-        <p className="mb-4">
-          <strong>Technologies :</strong> {project.technologies.join(", ")}
-        </p>
-        {project.uml && (
-          <div className="mb-4">
-            <h4 className="text-lg font-semibold mb-2">Diagramme UML</h4>
-            <div ref={mermaidRef} className="mermaid"></div>
-          </div>
-        )}
-        <div className="flex space-x-4">
-          {project.github && (
-            <a
-              href={project.github}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              GitHub
-            </a>
-          )}
-          {project.demo && (
-            <a
-              href={project.demo}
-              className="text-blue-600 dark:text-blue-400 hover:underline"
-            >
-              Démo
-            </a>
-          )}
-        </div>
-        <button
-          onClick={onClose}
-          className="mt-6 bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 dark:bg-blue-800 dark:hover:bg-blue-900"
+        <motion.div
+          className="modal-box"
+          initial={{ scale: 0.92, opacity: 0, y: 20 }}
+          animate={{ scale: 1, opacity: 1, y: 0 }}
+          exit={{ scale: 0.92, opacity: 0, y: 20 }}
+          transition={{ type: "spring", damping: 25, stiffness: 300 }}
+          onClick={(e) => e.stopPropagation()}
         >
-          Fermer
-        </button>
+          <button className="modal-close" onClick={onClose}>
+            <X size={14} />
+          </button>
+          <div className="section-label" style={{ marginBottom: "0.5rem" }}>
+            Projet #{project.id.toString().padStart(2, "0")}
+          </div>
+          <h2
+            style={{
+              fontFamily: "var(--font-display)",
+              fontSize: "1.3rem",
+              fontWeight: 700,
+              color: "var(--text)",
+              marginBottom: "1.25rem",
+              paddingRight: "2rem",
+            }}
+          >
+            {project.title}
+          </h2>
+          <div
+            style={{
+              borderRadius: "12px",
+              overflow: "hidden",
+              marginBottom: "1.5rem",
+              aspectRatio: "16/7",
+            }}
+          >
+            <img
+              src={project.image}
+              alt={project.title}
+              style={{
+                width: "100%",
+                height: "100%",
+                objectFit: "cover",
+                display: "block",
+              }}
+            />
+          </div>
+          <p
+            style={{
+              fontSize: "0.87rem",
+              color: "var(--text-sub)",
+              lineHeight: 1.75,
+              marginBottom: "1.25rem",
+            }}
+          >
+            {project.longDescription}
+          </p>
+          <div
+            style={{
+              display: "flex",
+              flexWrap: "wrap",
+              gap: "0.4rem",
+              marginBottom: "1.5rem",
+            }}
+          >
+            {project.technologies.map((t) => (
+              <span key={t} className="tech-badge">
+                {t}
+              </span>
+            ))}
+          </div>
+          {project.uml && (
+            <div
+              ref={mermaidRef}
+              className="mermaid"
+              style={{ marginBottom: "1.5rem" }}
+            />
+          )}
+          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+            {project.github && (
+              <a
+                href={project.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="project-link-chip"
+              >
+                <Github size={12} /> GitHub
+              </a>
+            )}
+            {project.demo && (
+              <a
+                href={project.demo}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="project-link-chip"
+                style={{ background: "var(--accent2)" }}
+              >
+                <ExternalLink size={12} /> Démo live
+              </a>
+            )}
+          </div>
+        </motion.div>
       </motion.div>
-    </motion.div>
+    </AnimatePresence>
   );
 };
 
-// Composant principal
+// ─── APP ──────────────────────────────────────────────────────────────────────
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<"light" | "dark">(
-    localStorage.getItem("theme") === "dark" ? "dark" : "light"
+  const [theme, setTheme] = useState<"dark" | "light">(
+    (localStorage.getItem("theme") as "dark" | "light") || "dark",
   );
-  const [filter, setFilter] = useState<string>("Tous");
+  const [filter, setFilter] = useState("Tous");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
-  const [formStatus, setFormStatus] = useState<string>("");
-  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(true);
-  const [showPDF, setShowPDF] = useState(false);
+  const [formStatus, setFormStatus] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const projectsPerPage = 6;
+
+  const typedRole = useTyping([
+    "Développeur Full-Stack",
+    "Architecte Logiciel",
+    "Dev Mobile Flutter",
+    "Passionné d'UX",
+  ]);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    document.documentElement.classList.toggle("dark", theme === "dark");
+    document.documentElement.className = theme === "light" ? "light-mode" : "";
   }, [theme]);
 
-  // Effet pour détecter la taille de l'écran et ajuster la sidebar
   useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setIsSidebarOpen(false);
-      } else {
-        setIsSidebarOpen(true);
-      }
-    };
-
-    // Exécuter au chargement
-    handleResize();
-
-    // Ajouter l'écouteur d'événement
-    window.addEventListener("resize", handleResize);
-
-    // Nettoyage
-    return () => {
-      window.removeEventListener("resize", handleResize);
-    };
+    const onResize = () => setIsSidebarOpen(window.innerWidth >= 768);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
   }, []);
 
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
-  const toggleSidebar = () => {
-    setIsSidebarOpen(!isSidebarOpen);
-  };
-
-  // Déclaration des données pour la section Projets
-  const uniqueTechnologies = Array.from(
-    new Set(projects.flatMap((p) => p.technologies))
-  );
-
-  // Déclaration de filteredProjects AVANT son utilisation
-  const filteredProjects =
+  const uniqueTechs = [
+    "Tous",
+    ...Array.from(new Set(projects.flatMap((p) => p.technologies))),
+  ];
+  const filtered =
     filter === "Tous"
       ? projects
       : projects.filter((p) => p.technologies.includes(filter));
-
-  // Logique de pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const projectsPerPage = 6; // 2 colonnes x 2 lignes = 4 projets par page
-
-  // Calcule les projets à afficher sur la page actuelle
-  const indexOfLastProject = currentPage * projectsPerPage;
-  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
-  const currentProjects = filteredProjects.slice(
-    indexOfFirstProject,
-    indexOfLastProject
+  const totalPages = Math.ceil(filtered.length / projectsPerPage);
+  const currentProjects = filtered.slice(
+    (currentPage - 1) * projectsPerPage,
+    currentPage * projectsPerPage,
   );
 
-  // Calcule le nombre total de pages
-  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
-
-  // Fonctions pour naviguer entre les pages
-  const handlePreviousPage = () => {
-    if (currentPage > 1) {
-      setCurrentPage(currentPage - 1);
-    }
-  };
-
-  const handleNextPage = () => {
-    if (currentPage < totalPages) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  const handleFormSubmit = (e: FormEvent) => {
+  const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
-    console.log("Form submitted with data:", formData);
-
     if (
       !formData.name.trim() ||
       !formData.email.trim() ||
       !formData.message.trim()
     ) {
-      setFormStatus("Veuillez remplir tous les champs correctement.");
-      console.log("Validation failed: Empty fields detected.");
+      setFormStatus("Veuillez remplir tous les champs.");
       return;
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setFormStatus("Veuillez entrer un email valide.");
-      console.log("Validation failed: Invalid email format.");
+      setFormStatus("Email invalide.");
       return;
     }
-
     setIsSubmitting(true);
-    setFormStatus("Envoi en cours...");
-
-    // EmailJS
+    setFormStatus("Envoi en cours…");
     emailjs
       .send(
         "service_petyfkl",
         "template_vjwqkum",
         formData,
-        "e6L6MGEksEKA9FB_w"
+        "e6L6MGEksEKA9FB_w",
       )
-      .then((response) => {
-        console.log("EmailJS success:", response.status, response.text);
+      .then(() => {
         setFormStatus("Message envoyé avec succès !");
         setFormData({ name: "", email: "", message: "" });
       })
-      .catch((error) => {
-        console.error("EmailJS error:", error);
-        setFormStatus(
-          `Erreur lors de l'envoi : ${
-            error.text || "Vérifiez votre connexion ou les clés EmailJS."
-          }`
-        );
-      })
-      .finally(() => {
-        setIsSubmitting(false);
-      });
+      .catch(() => setFormStatus("Erreur lors de l'envoi. Réessayez."))
+      .finally(() => setIsSubmitting(false));
   };
 
-  const particlesInit = async (engine: Engine) => {
-    await loadAll(engine);
-  };
+  const sidebarX = isSidebarOpen ? 0 : -240;
+  const mainML = isSidebarOpen ? 240 : 0;
 
   return (
     <div
-      className={`min-h-screen ${
-        theme === "light"
-          ? "bg-gray-100 text-gray-900"
-          : "bg-gray-900 text-white"
-      } transition-colors duration-300 flex relative`}
+      style={{
+        minHeight: "100vh",
+        background: "var(--bg)",
+        color: "var(--text)",
+      }}
     >
-      {/* Menu Hamburger pour mobile */}
-      <div className="md:hidden fixed top-4 left-4 z-50">
-        <button
-          onClick={toggleSidebar}
-          className="bg-gray-800 text-white p-2 rounded-full shadow-lg"
-          aria-label="Toggle Menu"
-        >
-          {isSidebarOpen ? (
-            <X className="h-6 w-6" />
-          ) : (
-            <Menu className="h-6 w-6" />
-          )}
-        </button>
-      </div>
-
-      {/* Sidebar */}
+      {/* ── SIDEBAR ── */}
       <motion.aside
-        initial={{ x: -250 }}
-        animate={{ x: isSidebarOpen ? 0 : -250 }}
-        transition={{ duration: 0.3 }}
-        className={`w-64 bg-gray-900 text-white flex-shrink-0 h-screen fixed top-0 left-0 flex flex-col p-6 z-30`}
+        className="sidebar"
+        animate={{ x: sidebarX }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
-        <motion.div
-          className="flex items-center justify-center mb-4"
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-        >
-          <motion.div
-            className={`relative w-24 h-24 rounded-full border-4 transition-all duration-300 ${
-              theme === "light"
-                ? "border-cyan-500 shadow-cyan-500/50"
-                : "border-cyan-400 shadow-cyan-400/50"
-            }`}
-            initial={{ opacity: 0, rotate: -180 }}
-            animate={{ opacity: 1, rotate: 0 }}
-            transition={{ duration: 1, type: "spring", stiffness: 100 }}
-            whileHover={{
-              scale: 1.1, // Zoom léger au survol
-              rotate: 10, // Rotation subtile
-              boxShadow:
-                theme === "light"
-                  ? "0 0 20px rgba(34, 211, 238, 0.8)"
-                  : "0 0 20px rgba(103, 232, 249, 0.8)", // Glow intensifié
-              transition: { duration: 0.3 },
-            }}
-          >
-            <img
-              src="/assets/fls2.jpg"
-              alt="ADESU-FLS"
-              className="w-full h-full rounded-full object-cover object-center"
-              loading="lazy"
-            />
-          </motion.div>
-        </motion.div>
+        <div className="sidebar-logo">
+          <span className="dot" />
+          ADESU-FLS
+        </div>
 
-        <motion.h1
-          className={`flex items-center justify-center text-3xl font-bold mb-8 relative transition-colors duration-300 ${
-            theme === "light"
-              ? "text-gray-400 hover:text-cyan-600"
-              : "text-gray-100 hover:text-cyan-400"
-          }`}
-          initial={{ width: 0 }}
-          animate={{ width: "auto" }}
-          transition={{ duration: 1.5, ease: "easeInOut" }}
-          whileHover={{
-            scale: 1.05, // Zoom léger au survol
-            transition: { duration: 0.3 },
-          }}
-        >
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 1 }}
-          >
-            ADESU-FLS
-          </motion.span>
-          {/* Curseur clignotant pour l'effet de typing */}
-          <motion.span
-            className={`h-8 w-1 ml-2 ${
-              theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-            }`}
-            animate={{ opacity: [1, 0, 1] }}
-            transition={{ duration: 0.5, repeat: Infinity, delay: 1 }}
-          />
-        </motion.h1>
-        <nav className="flex-grow">
-          <ul className="space-y-2">
-            <motion.li
-              whileHover={{
-                scale: 1.05, // Léger agrandissement de l'élément au survol
-                transition: { duration: 0.3 },
-              }}
-              className={`group rounded-lg p-3 transition-all duration-300 ${
-                theme === "light"
-                  ? "hover:bg-blue-100 hover:shadow-lg hover:shadow-blue-200/50"
-                  : "hover:bg-gray-700 hover:shadow-lg hover:shadow-blue-500/30"
-              }`} // Fond et ombre au survol
+        <nav style={{ flex: 1 }}>
+          {[
+            { href: "#home", icon: "⌂", label: "Home" },
+            { href: "#about", icon: "◎", label: "About" },
+            { href: "#projects", icon: "⬡", label: "Projects" },
+            { href: "#skills", icon: "⚡", label: "Skills" },
+            { href: "#contact", icon: "✉", label: "Contact" },
+            { href: "#cv", icon: "↓", label: "CV" },
+          ].map((item) => (
+            <a
+              key={item.href}
+              href={item.href}
+              className="nav-link"
+              onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
             >
-              <a
-                href="#home"
-                className="flex items-center space-x-2"
-                onClick={() =>
-                  window.innerWidth < 768 && setIsSidebarOpen(false)
-                }
+              <span
+                className="nav-icon"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "0.85rem",
+                  color: "var(--accent)",
+                }}
               >
-                <motion.span
-                  whileHover={{
-                    scale: 1.3, // Grossissement de l'emoji
-                    rotate: 15, // Petite rotation
-                    y: -5, // Saut vers le haut
-                    transition: {
-                      duration: 0.3,
-                      type: "spring",
-                      stiffness: 200,
-                    },
-                  }}
-                  className="text-xl"
-                >
-                  🏠
-                </motion.span>
-                <motion.span
-                  className={`relative text-lg font-medium transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-400 group-hover:text-cyan-600"
-                      : "text-gray-200 group-hover:text-cyan-400"
-                  }`}
-                  whileHover={{
-                    x: 5, // Petit décalage à droite pour un effet de glissement
-                    transition: { duration: 0.3 },
-                  }}
-                >
-                  Home
-                  {/* Soulignement animé au survol */}
-                  <motion.span
-                    className={`absolute left-0 bottom-0 h-0.5 ${
-                      theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-                    }`}
-                    initial={{ width: 0 }}
-                    whileHover={{
-                      width: "100%",
-                      transition: { duration: 0.3 },
-                    }}
-                  />
-                </motion.span>
-              </a>
-            </motion.li>
-
-            <motion.li
-              whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-              className={`group rounded-lg p-3 transition-all duration-300 ${
-                theme === "light"
-                  ? "hover:bg-blue-100 hover:shadow-lg hover:shadow-blue-200/50"
-                  : "hover:bg-gray-700 hover:shadow-lg hover:shadow-blue-500/30"
-              }`}
-            >
-              <a
-                href="#about"
-                className="flex items-center space-x-2"
-                onClick={() =>
-                  window.innerWidth < 768 && setIsSidebarOpen(false)
-                }
-              >
-                <motion.span
-                  whileHover={{
-                    scale: 1.3,
-                    rotate: 15,
-                    y: -5,
-                    transition: {
-                      duration: 0.3,
-                      type: "spring",
-                      stiffness: 200,
-                    },
-                  }}
-                  className="text-xl"
-                >
-                  👤
-                </motion.span>
-                <motion.span
-                  className={`relative text-lg font-medium transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-400 group-hover:text-cyan-600"
-                      : "text-gray-200 group-hover:text-cyan-400"
-                  }`}
-                  whileHover={{ x: 5, transition: { duration: 0.3 } }}
-                >
-                  About
-                  <motion.span
-                    className={`absolute left-0 bottom-0 h-0.5 ${
-                      theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-                    }`}
-                    initial={{ width: 0 }}
-                    whileHover={{
-                      width: "100%",
-                      transition: { duration: 0.3 },
-                    }}
-                  />
-                </motion.span>
-              </a>
-            </motion.li>
-
-            <motion.li
-              whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-              className={`group rounded-lg p-3 transition-all duration-300 ${
-                theme === "light"
-                  ? "hover:bg-blue-100 hover:shadow-lg hover:shadow-blue-200/50"
-                  : "hover:bg-gray-700 hover:shadow-lg hover:shadow-blue-500/30"
-              }`}
-            >
-              <a
-                href="#projects"
-                className="flex items-center space-x-2"
-                onClick={() =>
-                  window.innerWidth < 768 && setIsSidebarOpen(false)
-                }
-              >
-                <motion.span
-                  whileHover={{
-                    scale: 1.3,
-                    rotate: 15,
-                    y: -5,
-                    transition: {
-                      duration: 0.3,
-                      type: "spring",
-                      stiffness: 200,
-                    },
-                  }}
-                  className="text-xl"
-                >
-                  📂
-                </motion.span>
-                <motion.span
-                  className={`relative text-lg font-medium transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-400 group-hover:text-cyan-600"
-                      : "text-gray-200 group-hover:text-cyan-400"
-                  }`}
-                  whileHover={{ x: 5, transition: { duration: 0.3 } }}
-                >
-                  Projects
-                  <motion.span
-                    className={`absolute left-0 bottom-0 h-0.5 ${
-                      theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-                    }`}
-                    initial={{ width: 0 }}
-                    whileHover={{
-                      width: "100%",
-                      transition: { duration: 0.3 },
-                    }}
-                  />
-                </motion.span>
-              </a>
-            </motion.li>
-
-            <motion.li
-              whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-              className={`group rounded-lg p-3 transition-all duration-300 ${
-                theme === "light"
-                  ? "hover:bg-blue-100 hover:shadow-lg hover:shadow-blue-200/50"
-                  : "hover:bg-gray-700 hover:shadow-lg hover:shadow-blue-500/30"
-              }`}
-            >
-              <a
-                href="#skills"
-                className="flex items-center space-x-2"
-                onClick={() =>
-                  window.innerWidth < 768 && setIsSidebarOpen(false)
-                }
-              >
-                <motion.span
-                  whileHover={{
-                    scale: 1.3,
-                    rotate: 15,
-                    y: -5,
-                    transition: {
-                      duration: 0.3,
-                      type: "spring",
-                      stiffness: 200,
-                    },
-                  }}
-                  className="text-xl"
-                >
-                  🛠️
-                </motion.span>
-                <motion.span
-                  className={`relative text-lg font-medium transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-400 group-hover:text-cyan-600"
-                      : "text-gray-200 group-hover:text-cyan-400"
-                  }`}
-                  whileHover={{ x: 5, transition: { duration: 0.3 } }}
-                >
-                  Skills
-                  <motion.span
-                    className={`absolute left-0 bottom-0 h-0.5 ${
-                      theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-                    }`}
-                    initial={{ width: 0 }}
-                    whileHover={{
-                      width: "100%",
-                      transition: { duration: 0.3 },
-                    }}
-                  />
-                </motion.span>
-              </a>
-            </motion.li>
-
-            <motion.li
-              whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-              className={`group rounded-lg p-3 transition-all duration-300 ${
-                theme === "light"
-                  ? "hover:bg-blue-100 hover:shadow-lg hover:shadow-blue-200/50"
-                  : "hover:bg-gray-700 hover:shadow-lg hover:shadow-blue-500/30"
-              }`}
-            >
-              <a
-                href="#contact"
-                className="flex items-center space-x-2"
-                onClick={() =>
-                  window.innerWidth < 768 && setIsSidebarOpen(false)
-                }
-              >
-                <motion.span
-                  whileHover={{
-                    scale: 1.3,
-                    rotate: 15,
-                    y: -5,
-                    transition: {
-                      duration: 0.3,
-                      type: "spring",
-                      stiffness: 200,
-                    },
-                  }}
-                  className="text-xl"
-                >
-                  ✉️
-                </motion.span>
-                <motion.span
-                  className={`relative text-lg font-medium transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-400 group-hover:text-cyan-600"
-                      : "text-gray-200 group-hover:text-cyan-400"
-                  }`}
-                  whileHover={{ x: 5, transition: { duration: 0.3 } }}
-                >
-                  Contact
-                  <motion.span
-                    className={`absolute left-0 bottom-0 h-0.5 ${
-                      theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-                    }`}
-                    initial={{ width: 0 }}
-                    whileHover={{
-                      width: "100%",
-                      transition: { duration: 0.3 },
-                    }}
-                  />
-                </motion.span>
-              </a>
-            </motion.li>
-
-            <motion.li
-              whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-              className={`group rounded-lg p-3 transition-all duration-300 ${
-                theme === "light"
-                  ? "hover:bg-blue-100 hover:shadow-lg hover:shadow-blue-200/50"
-                  : "hover:bg-gray-700 hover:shadow-lg hover:shadow-blue-500/30"
-              }`}
-            >
-              <a
-                href="#cv"
-                className="flex items-center space-x-2"
-                onClick={() =>
-                  window.innerWidth < 768 && setIsSidebarOpen(false)
-                }
-              >
-                <motion.span
-                  whileHover={{
-                    scale: 1.3,
-                    rotate: 15,
-                    y: -5,
-                    transition: {
-                      duration: 0.3,
-                      type: "spring",
-                      stiffness: 200,
-                    },
-                  }}
-                  className="text-xl"
-                >
-                  📄
-                </motion.span>
-                <motion.span
-                  className={`relative text-lg font-medium transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-400 group-hover:text-cyan-600"
-                      : "text-gray-200 group-hover:text-cyan-400"
-                  }`}
-                  whileHover={{ x: 5, transition: { duration: 0.3 } }}
-                >
-                  CV
-                  <motion.span
-                    className={`absolute left-0 bottom-0 h-0.5 ${
-                      theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-                    }`}
-                    initial={{ width: 0 }}
-                    whileHover={{
-                      width: "100%",
-                      transition: { duration: 0.3 },
-                    }}
-                  />
-                </motion.span>
-              </a>
-            </motion.li>
-          </ul>
+                {item.icon}
+              </span>
+              {item.label}
+            </a>
+          ))}
         </nav>
-        {/* Icônes de réseaux sociaux */}
-        <div className="flex justify-around mt-auto mb-4">
-          <motion.a
+
+        <div className="sidebar-socials">
+          <a
             href="https://www.linkedin.com/in/kokouvi-fran%C3%A7ois-adesu-179347290/"
-            whileHover={{ scale: 1.2, rotate: 360 }}
-            transition={{ duration: 0.3 }}
-            className="text-white hover:text-cyan-200"
+            className="social-btn"
             aria-label="LinkedIn"
           >
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-1.337-.029-3.058-1.867-3.058-1.867 0-2.152 1.459-2.152 2.968v5.694h-3v-11h2.878v1.496h.041c.399-.757 1.377-1.557 2.833-1.557 3.027 0 3.587 1.991 3.587 4.579v6.482z" />
-            </svg>
-          </motion.a>
-          <motion.a
+            <Linkedin size={14} />
+          </a>
+          <a
             href="https://github.com/adekomen"
-            whileHover={{ scale: 1.2, rotate: 360 }}
-            transition={{ duration: 0.3 }}
-            className="text-white hover:text-cyan-200"
+            className="social-btn"
             aria-label="GitHub"
           >
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z" />
-            </svg>
-          </motion.a>
-          <motion.a
+            <Github size={14} />
+          </a>
+          <a
             href="mailto:k.francoisadesu@gmail.com"
-            whileHover={{ scale: 1.2, rotate: 360 }}
-            transition={{ duration: 0.3 }}
-            className="text-white hover:text-cyan-200"
+            className="social-btn"
             aria-label="Email"
           >
-            <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 24 24">
-              <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
-            </svg>
-          </motion.a>
+            <Mail size={14} />
+          </a>
         </div>
       </motion.aside>
 
-      {/* Overlay pour cliquer à l'extérieur et fermer la sidebar sur mobile */}
+      {/* Mobile overlay */}
       {isSidebarOpen && window.innerWidth < 768 && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-50 z-20 md:hidden"
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.5)",
+            zIndex: 35,
+          }}
           onClick={() => setIsSidebarOpen(false)}
-        ></div>
+        />
       )}
 
-      {/* Navbar */}
+      {/* ── TOPBAR ── */}
       <motion.nav
-        initial={{ y: -50 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.5 }}
-        className={`fixed top-0 right-0 bg-gray-900 text-white p-4 flex justify-between items-center z-20 shadow-lg ${
-          isSidebarOpen ? "md:left-64" : "left-0"
-        }`}
+        className="topbar"
+        animate={{ left: mainML }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
-        <div className="flex items-center">
-          <h1 className="text-lg font-bold">🌟🌟🌟🌟🌟</h1>
-        </div>
-        <div className="flex items-center">
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.5 }}
-            className="text-sm italic text-cyan-300 hidden sm:inline"
-          >
-            Codez vos rêves, construisez l'avenir 🌟
-          </motion.span>
-        </div>
-        <div className="flex items-center">
-          <button
-            onClick={toggleTheme}
-            aria-label="Basculer le thème"
-            className="focus:outline-none"
-          >
-            {theme === "light" ? "🌙" : "☀️"}
-          </button>
-        </div>
+        <button
+          className="hamburger"
+          style={{ display: "flex" }}
+          onClick={() => setIsSidebarOpen((v) => !v)}
+          aria-label="Menu"
+        >
+          {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
+        </button>
+        <span className="topbar-quote">
+          // Codez vos rêves, construisez l'avenir
+        </span>
+        <button
+          className="theme-toggle"
+          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
+        >
+          {theme === "dark" ? "☀️" : "🌙"}{" "}
+          <span style={{ fontSize: "0.75rem" }}>
+            {theme === "dark" ? "Light" : "Dark"}
+          </span>
+        </button>
       </motion.nav>
 
-      {/* Contenu principal */}
-      <div
-        className={`flex-1 relative flex flex-col ${
-          isSidebarOpen ? "md:ml-64" : "ml-0"
-        } pt-16`} // Ajout de pt-16 pour éviter que le contenu ne soit masqué par la navbar
+      {/* ── MAIN CONTENT ── */}
+      <motion.div
+        className="main-content"
+        animate={{ marginLeft: mainML }}
+        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
       >
-        {/* Particules en fond */}
-        <Particles
-          id="tsparticles"
-          // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-          // @ts-expect-error
-          init={particlesInit}
-          options={{
-            background: {
-              color: { value: theme === "light" ? "#f3f4f6" : "#111827" },
-            },
-            particles: {
-              number: {
-                value: 50,
-                density: {
-                  enable: true,
-                  width: 800,
-                  height: 800,
-                },
-              },
-              color: {
-                value: theme === "light" ? "#3b82f6" : "#60a5fa",
-              },
-              shape: {
-                type: "circle",
-              },
-              opacity: {
-                value: 0.5,
-              },
-              size: {
-                value: { min: 1, max: 3 },
-              },
-              move: {
-                enable: true,
-                speed: 1,
-                direction: "none",
-                outModes: {
-                  default: "out",
-                },
-              },
-            },
-          }}
-          className="absolute inset-0 z-[-1]"
-        />
-
-        {/* Accueil */}
-        <motion.section
-          id="home"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 1 }}
-          className={`min-h-screen flex items-center justify-center relative z-10 ${
-            theme === "light" ? "bg-gray-100" : "bg-gray-800"
-          }`}
-        >
-          <div className="container mx-auto px-16">
-            <div className="flex flex-col md:flex-row items-center justify-between">
-              {/* Texte à gauche */}
-              <motion.div
-                initial={{ opacity: 0, x: -50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8 }}
-                className="md:w-1/2 text-center md:text-left mb-8 md:mb-0"
-              >
-                {/* Titre avec effet de "typing" */}
-                <motion.h2
-                  className={`text-5xl md:text-6xl font-bold mb-4 leading-tight relative transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-900 hover:text-cyan-600"
-                      : "text-gray-100 hover:text-cyan-400"
-                  }`}
-                  initial={{ width: 0 }}
-                  animate={{ width: "auto" }}
-                  transition={{ duration: 1.5, ease: "easeInOut" }}
-                  whileHover={{
-                    scale: 1.05, // Léger zoom au survol
-                    transition: { duration: 0.3 },
-                  }}
-                >
-                  <motion.span
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.5, delay: 1 }}
-                  >
-                    ADESU-FLS
-                  </motion.span>
-                  {/* Curseur clignotant pour l'effet de typing */}
-                  <motion.span
-                    className={`absolute h-12 w-1 ml-2 ${
-                      theme === "light" ? "bg-cyan-600" : "bg-cyan-400"
-                    }`}
-                    animate={{ opacity: [1, 0, 1] }}
-                    transition={{ duration: 0.5, repeat: Infinity, delay: 1 }}
-                  />
-                </motion.h2>
-
-                {/* Paragraphe avec zoom au survol */}
-                <motion.p
-                  className={`text-lg md:text-xl mb-6 transition-colors duration-300 ${
-                    theme === "light"
-                      ? "text-gray-600 hover:text-gray-800"
-                      : "text-gray-300 hover:text-gray-100"
-                  }`}
-                  whileHover={{
-                    scale: 1.05, // Léger zoom
-                    transition: { duration: 0.3 },
-                  }}
-                >
-                  Architecte logiciel.{" "}
-                  <span className="block text-sm text-gray-500 dark:text-gray-400 mt-2">
-                    Création d'applications modernes et scalables avec{" "}
-                    <motion.a
-                      href="https://github.com/adekomen"
-                      className={`relative transition-colors duration-300 ${
-                        theme === "light"
-                          ? "text-blue-500 hover:text-blue-700"
-                          : "text-blue-400 hover:text-blue-300"
-                      } hover:underline`}
-                      whileHover={{ scale: 1.1, transition: { duration: 0.3 } }}
-                    >
-                      @adekomen
-                      <motion.span
-                        className={`absolute left-0 bottom-0 h-0.5 ${
-                          theme === "light" ? "bg-blue-700" : "bg-blue-300"
-                        }`}
-                        initial={{ width: 0 }}
-                        whileHover={{
-                          width: "100%",
-                          transition: { duration: 0.3 },
-                        }}
-                      />
-                    </motion.a>
-                  </span>
-                </motion.p>
-
-                {/* Bouton avec pulsation et glow */}
-                <motion.a
-                  href="#projects"
-                  initial={{ opacity: 0, y: 50 }}
-                  animate={{
-                    opacity: 1,
-                    y: 0,
-                    scale: [1, 1.05, 1], // Pulsation répétée à l'entrée
-                  }}
-                  transition={{
-                    duration: 0.8,
-                    delay: 0.4,
-                    scale: { duration: 1, repeat: Infinity, repeatDelay: 1 },
-                  }}
-                  whileHover={{
-                    scale: 1.1, // Zoom au survol
-                    boxShadow:
-                      theme === "light"
-                        ? "0 0 15px rgba(0, 0, 0, 0.3)"
-                        : "0 0 15px rgba(34, 211, 238, 0.5)", // Glow au survol
-                    transition: { duration: 0.3 },
-                  }}
-                  className={`inline-block border-2 ${
-                    theme === "light"
-                      ? "border-gray-900 text-gray-900 hover:bg-gray-900 hover:text-white"
-                      : "border-gray-200 text-gray-200 hover:bg-gray-200 hover:text-gray-900"
-                  } px-6 py-3 rounded-lg font-semibold transition-colors duration-300`}
-                >
-                  Découvrir mes projets
-                </motion.a>
-              </motion.div>
-
-              {/* Image à droite */}
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow:
-                    theme === "light"
-                      ? "0 15px 30px rgba(0, 0, 0, 0.3)"
-                      : "0 15px 30px rgba(0, 0, 0, 0.7)",
-                  borderColor:
-                    theme === "light"
-                      ? "rgb(34, 211, 238)"
-                      : "rgb(103, 232, 249)", // Bordure cyan
-                  transition: { duration: 0.3 },
-                }}
-                className="md:w-1/2 border-2 border-transparent rounded-lg w-full h-full overflow-hidden"
-              >
-                <img
-                  src="/assets/lesaint2.jpg"
-                  alt="ADESU-FLS"
-                  className="w-full h-full max-h-[600px] object-cover rounded-lg shadow-lg transition-all duration-300"
-                  loading="lazy"
-                />
-              </motion.div>
-            </div>
-          </div>
-        </motion.section>
-
-        {/* Projets */}
-        <motion.section
-          id="projects"
-          initial={{ opacity: 0, x: -50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-          className={`py-20 ${theme === "light" ? "bg-white" : "bg-gray-800"}`}
-        >
-          <div className="container mx-auto px-4">
-            {/* Titre avec effet de "typing" */}
-            <motion.h2
-              className={`text-3xl font-bold text-center mb-10 relative transition-all duration-300 ${
-                theme === "light" ? "text-gray-900" : "text-gray-100"
-              }`} // Retiré hover:text-cyan-*
-              initial={{ width: 0 }}
-              animate={{ width: "auto" }}
-              transition={{ duration: 1.5, ease: "easeInOut" }}
-              whileHover={{
-                scale: 1.05,
-                transition: { duration: 0.3 },
-              }}
+        {/* ── HERO ── */}
+        <section id="home" className="hero">
+          <div className="hero-glow" />
+          <div className="hero-glow2" />
+          <div className="hero-grid">
+            <motion.div
+              initial={{ opacity: 0, y: 30 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.7 }}
             >
-              <motion.span
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 1 }}
-              >
-                Mes Projets
-              </motion.span>
-            </motion.h2>
-
-            {/* Filtre avec zoom et glow */}
-            <div className="flex justify-center mb-8">
-              <motion.select
-                value={filter}
-                onChange={(e) => setFilter(e.target.value)}
-                className={`p-2 rounded border-2 transition-all duration-300 ${
-                  theme === "light"
-                    ? "bg-gray-200 text-gray-900 border-gray-300"
-                    : "bg-gray-700 text-white border-gray-600"
-                }`} // Retiré hover:bg-*
-                whileHover={{
-                  scale: 1.1,
-                  boxShadow:
-                    theme === "light"
-                      ? "0 0 10px rgba(0, 0, 0, 0.2)"
-                      : "0 0 10px rgba(34, 211, 238, 0.5)",
-                  transition: { duration: 0.3 },
-                }}
-                aria-label="Filtrer par technologie"
-              >
-                <option>Tous</option>
-                {uniqueTechnologies.map((tech) => (
-                  <option key={tech} value={tech}>
-                    {tech}
-                  </option>
-                ))}
-              </motion.select>
-            </div>
-
-            {/* Grille de projets */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-8">
-              {currentProjects.map((project) => (
-                <motion.div
-                  key={project.id}
-                  initial={{ opacity: 0, scale: 0.9 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  whileHover={{
-                    scale: 1.05,
-                    rotateX: 5,
-                    rotateY: 5,
-                    boxShadow:
-                      theme === "light"
-                        ? "0 10px 20px rgba(0, 0, 0, 0.2)"
-                        : "0 10px 20px rgba(0, 0, 0, 0.5)",
-                    transition: { duration: 0.3 },
-                  }}
-                  className={`p-6 rounded-lg shadow-lg transition-all duration-300 ${
-                    theme === "light" ? "bg-gray-100" : "bg-gray-700"
-                  } cursor-pointer`}
-                  onClick={() => setSelectedProject(project)}
-                >
-                  <motion.div
-                    whileHover={{
-                      scale: 1.05,
-                      transition: { duration: 0.3 },
-                    }}
-                    className="relative w-full h-48 rounded transition-all duration-300"
-                  >
-                    <img
-                      src={project.image}
-                      alt={project.title}
-                      className="w-full h-full object-cover rounded"
-                      loading="lazy"
-                    />
-                  </motion.div>
-                  <motion.h3
-                    className={`text-xl font-semibold mb-2 transition-all duration-300 ${
-                      theme === "light" ? "text-gray-900" : "text-gray-100"
-                    }`} // Retiré hover:text-cyan-*
-                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                  >
-                    {project.title}
-                  </motion.h3>
-                  <motion.p
-                    className={`mb-4 transition-all duration-300 ${
-                      theme === "light" ? "text-gray-600" : "text-gray-300"
-                    }`} // Retiré hover:text-*
-                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                  >
-                    {project.description}
-                  </motion.p>
-                  {project.demo && (
-                    <motion.p
-                      className={`mb-4 transition-all duration-300 ${
-                        theme === "light" ? "text-gray-600" : "text-gray-300"
-                      }`} // Retiré hover:text-*
-                      whileHover={{
-                        scale: 1.05,
-                        transition: { duration: 0.3 },
-                      }}
-                    >
-                      <strong>Demo :</strong> {project.demo}
-                    </motion.p>
-                  )}
-                  <motion.p
-                    className={`mb-4 transition-all duration-300 ${
-                      theme === "light" ? "text-gray-600" : "text-gray-300"
-                    }`} // Retiré hover:text-*
-                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                  >
-                    <strong>Technologies :</strong>{" "}
-                    {project.technologies.join(", ")}
-                  </motion.p>
-                </motion.div>
-              ))}
-            </div>
-
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="flex justify-center mt-8 space-x-4">
-                <motion.button
-                  onClick={handlePreviousPage}
-                  disabled={currentPage === 1}
-                  className={`p-2 rounded-full transition-all duration-300 ${
-                    theme === "light"
-                      ? "bg-gray-200 text-gray-900"
-                      : "bg-gray-700 text-white"
-                  } ${
-                    currentPage === 1 ? "opacity-50 cursor-not-allowed" : ""
-                  }`}
-                  whileHover={{
-                    scale: currentPage === 1 ? 1 : 1.1,
-                    boxShadow:
-                      currentPage === 1
-                        ? "none"
-                        : theme === "light"
-                        ? "0 0 10px rgba(0, 0, 0, 0.2)"
-                        : "0 0 10px rgba(34, 211, 238, 0.5)",
-                    transition: { duration: 0.3 },
-                  }}
-                >
-                  Précédent
-                </motion.button>
-                <span
-                  className={`self-center ${
-                    theme === "light" ? "text-gray-900" : "text-gray-100"
-                  }`}
-                >
-                  Page {currentPage} sur {totalPages}
-                </span>
-                <motion.button
-                  onClick={handleNextPage}
-                  disabled={currentPage === totalPages}
-                  className={`p-2 rounded-full transition-all duration-300 ${
-                    theme === "light"
-                      ? "bg-gray-200 text-gray-900"
-                      : "bg-gray-700 text-white"
-                  } ${
-                    currentPage === totalPages
-                      ? "opacity-50 cursor-not-allowed"
-                      : ""
-                  }`}
-                  whileHover={{
-                    scale: currentPage === totalPages ? 1 : 1.1,
-                    boxShadow:
-                      currentPage === totalPages
-                        ? "none"
-                        : theme === "light"
-                        ? "0 0 10px rgba(0, 0, 0, 0.2)"
-                        : "0 0 10px rgba(34, 211, 238, 0.5)",
-                    transition: { duration: 0.3 },
-                  }}
-                >
-                  Suivant
-                </motion.button>
+              <p className="hero-eyebrow">👋 Bienvenue sur mon portfolio</p>
+              <h1 className="hero-name">
+                Kokouvi François
+                <br />
+                ADESU
+              </h1>
+              <p className="hero-role">
+                <span style={{ color: "var(--accent)" }}>$ </span>
+                {typedRole}
+                <span className="cursor" />
+              </p>
+              <p className="hero-desc">
+                Architecte logiciel basé à Lomé, Togo. Je construis des
+                expériences web et mobile élégantes, du backend robuste aux
+                interfaces modernes.
+              </p>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
+                <a href="#projects" className="hero-cta">
+                  Voir mes projets <ExternalLink size={14} />
+                </a>
+                <a href="#contact" className="hero-cta-ghost">
+                  Me contacter →
+                </a>
               </div>
-            )}
+            </motion.div>
+
+            <motion.div
+              className="hero-image-wrap"
+              initial={{ opacity: 0, scale: 0.96 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ duration: 0.8, delay: 0.2 }}
+            >
+              <img
+                src="/assets/lesaint2.jpg"
+                alt="François ADESU"
+                loading="lazy"
+              />
+            </motion.div>
           </div>
+        </section>
+
+        {/* ── PROJECTS ── */}
+        <section
+          id="projects"
+          className="section"
+          style={{ background: "var(--surface)" }}
+        >
+          <span className="section-big-number">02</span>
+          <div className="section-header">
+            <p className="section-label">// mes réalisations</p>
+            <h2 className="section-title">Projets récents</h2>
+            <div className="section-line" />
+          </div>
+
+          <div className="filter-bar">
+            {uniqueTechs.map((tech) => (
+              <button
+                key={tech}
+                className={`filter-pill ${filter === tech ? "active" : ""}`}
+                onClick={() => {
+                  setFilter(tech);
+                  setCurrentPage(1);
+                }}
+              >
+                {tech}
+              </button>
+            ))}
+          </div>
+
+          <div className="projects-grid">
+            {currentProjects.map((project, i) => (
+              <motion.div
+                key={project.id}
+                className="project-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.07 }}
+                onClick={() => setSelectedProject(project)}
+              >
+                <div className="project-img-wrap">
+                  <img
+                    src={project.image}
+                    alt={project.title}
+                    className="project-img"
+                    loading="lazy"
+                  />
+                  <div className="project-img-overlay">
+                    {project.github && (
+                      <a
+                        href={project.github}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="project-link-chip"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <Github size={11} /> GitHub
+                      </a>
+                    )}
+                    {project.demo && (
+                      <a
+                        href={project.demo}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="project-link-chip"
+                        style={{ background: "var(--accent2)" }}
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <ExternalLink size={11} /> Demo
+                      </a>
+                    )}
+                  </div>
+                </div>
+                <div className="project-body">
+                  <div className="project-techs">
+                    {project.technologies.slice(0, 3).map((t) => (
+                      <span key={t} className="tech-badge">
+                        {t}
+                      </span>
+                    ))}
+                    {project.technologies.length > 3 && (
+                      <span className="tech-badge">
+                        +{project.technologies.length - 3}
+                      </span>
+                    )}
+                  </div>
+                  <h3 className="project-title">{project.title}</h3>
+                  <p className="project-desc">{project.description}</p>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="pagination">
+              <button
+                className="page-btn"
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage((p) => p - 1)}
+              >
+                <ChevronLeft size={16} />
+              </button>
+              <span className="page-info">
+                Page {currentPage} / {totalPages}
+              </span>
+              <button
+                className="page-btn"
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage((p) => p + 1)}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          )}
+
           <AnimatePresence>
             {selectedProject && (
               <ProjectModal
@@ -1220,736 +1512,414 @@ const App: React.FC = () => {
               />
             )}
           </AnimatePresence>
-        </motion.section>
+        </section>
 
-        {/* Compétences */}
-        <motion.section
-          id="skills"
-          initial={{ opacity: 0, x: 50 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.8 }}
-          className={`py-20 ${
-            theme === "light" ? "bg-gray-100" : "bg-gray-800"
-          }`}
-        >
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold text-center mb-6">
-              Mes Compétences
-            </h2>
-            {/* Phrase d'introduction */}
-            <motion.p
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-              className={`text-center text-lg max-w-2xl mx-auto mb-10 ${
-                theme === "light" ? "text-gray-600" : "text-gray-300"
-              }`}
-            >
-              À travers mon parcours, j’ai eu la chance d’explorer et de
-              maîtriser diverses technologies, toujours avec la même curiosité
-              et l’envie de créer des solutions qui ont du sens et qui apportent
-              de la valeur aux utilisateurs.
-            </motion.p>
-            {/* Liste des compétences */}
-            <div className="flex flex-wrap justify-center gap-4">
-              {[
-                "JavaScript",
-                "PHP",
-                "TypeScript",
-                "React",
-                "Node.js",
-                "MongoDB",
-                "MySQL",
-                "Docker",
-                "UML",
-                "SQL",
-                "Flutter",
-                "Laravel",
-                "Angular",
-                "Python",
-              ].map((skill) => (
-                <motion.span
-                  key={skill}
-                  whileHover={{ scale: 1.1, rotate: 5 }}
-                  className={`px-4 py-2 rounded-full ${
-                    theme === "light"
-                      ? "bg-cyan-600 text-white"
-                      : "bg-cyan-800 text-white"
-                  }`}
-                >
-                  {skill}
-                </motion.span>
-              ))}
-            </div>
+        {/* ── SKILLS ── */}
+        <section id="skills" className="section">
+          <span className="section-big-number">03</span>
+          <div className="section-header">
+            <p className="section-label">// mon arsenal</p>
+            <h2 className="section-title">Compétences</h2>
+            <div className="section-line" />
           </div>
-        </motion.section>
 
-        {/* À propos */}
-        <motion.section
+          <p
+            style={{
+              fontSize: "0.9rem",
+              color: "var(--text-sub)",
+              maxWidth: "520px",
+              lineHeight: 1.75,
+              marginBottom: "2rem",
+            }}
+          >
+            À travers mon parcours, j'ai exploré et maîtrisé diverses
+            technologies, toujours avec la même curiosité et l'envie de créer
+            des solutions qui ont du sens.
+          </p>
+
+          <div className="skills-grid">
+            {[
+              "JavaScript",
+              "TypeScript",
+              "PHP",
+              "Python",
+              "React",
+              "Angular",
+              "Node.js",
+              "Laravel",
+              "Flutter",
+              "Dart",
+              "MySQL",
+              "MongoDB",
+              "SQL",
+              "Docker",
+              "UML",
+            ].map((skill) => (
+              <motion.span
+                key={skill}
+                className="skill-chip"
+                whileHover={{ y: -3 }}
+                transition={{ type: "spring", stiffness: 300 }}
+              >
+                {skill}
+              </motion.span>
+            ))}
+          </div>
+
+          <div className="journey-cards">
+            {[
+              {
+                icon: <Code size={20} />,
+                color: "#3B82F6",
+                title: "Débuts en Programmation",
+                desc: "Initiation aux algorithmes et POO avec Java. Premiers projets web (HTML/CSS/JS) et découverte des bases de données relationnelles.",
+              },
+              {
+                icon: <Cpu size={20} />,
+                color: "#7B2FBE",
+                title: "Architecture Logicielle",
+                desc: "Conception de systèmes modulaires avec microservices. Expérience avec Docker, API REST. Développement d'applications fullstack.",
+              },
+              {
+                icon: <Smartphone size={20} />,
+                color: "#0FF4C6",
+                title: "Passion Web/Mobile",
+                desc: "Création d'interfaces dynamiques avec React et Flutter. Intérêt pour les PWA et l'optimisation des performances mobiles.",
+              },
+            ].map((card, i) => (
+              <motion.div
+                key={i}
+                className="journey-card"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 + 0.2 }}
+              >
+                <div
+                  className="journey-icon"
+                  style={{ background: `${card.color}18` }}
+                >
+                  <span style={{ color: card.color }}>{card.icon}</span>
+                </div>
+                <h3>{card.title}</h3>
+                <p>{card.desc}</p>
+              </motion.div>
+            ))}
+          </div>
+        </section>
+
+        {/* ── ABOUT ── */}
+        <section
           id="about"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className={`py-20 ${theme === "light" ? "bg-white" : "bg-gray-800"}`}
+          className="section"
+          style={{ background: "var(--surface)" }}
         >
-          <div className="container mx-auto px-4">
-            <h2 className="text-3xl font-bold mb-12 text-center">
-              A Propos de moi
-            </h2>
+          <span className="section-big-number">04</span>
+          <div className="section-header">
+            <p className="section-label">// qui suis-je ?</p>
+            <h2 className="section-title">À propos de moi</h2>
+            <div className="section-line" />
+          </div>
 
+          <div className="about-grid">
             <motion.div
-              initial={{ opacity: 0, x: -50 }}
+              className="about-photo"
+              initial={{ opacity: 0, x: -20 }}
               animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-              className="flex flex-col md:flex-row justify-center items-center gap-8 mb-12"
+              transition={{ duration: 0.6 }}
             >
-              {/* Photo */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-                whileHover={{
-                  scale: 1.05,
-                  boxShadow:
-                    theme === "light"
-                      ? "0 15px 30px rgba(0, 0, 0, 0.3)"
-                      : "0 15px 30px rgba(0, 0, 0, 0.7)",
-                  borderColor:
-                    theme === "light"
-                      ? "rgb(34, 211, 238)"
-                      : "rgb(103, 232, 249)", // Bordure cyan
-                  transition: { duration: 0.3 },
-                }}
-                className="w-[280px] h-[360px] border-2 border-transparent rounded-lg overflow-hidden"
-              >
-                <img
-                  src="/assets/lesaint4.jpg"
-                  alt="Kokouvi François Adesu"
-                  className="w-full h-full object-cover rounded-lg"
-                  loading="lazy"
-                />
-              </motion.div>
-
-              {/* Texte de présentation */}
-              <motion.div
-                initial={{ opacity: 0, x: 50 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-                className="flex-1"
-              >
-                <p
-                  className={`text-lg ${
-                    theme === "light" ? "text-gray-600" : "text-gray-300"
-                  } mb-4`}
-                >
-                  Salut, moi c’est <strong>Kokouvi François ADESU</strong>, mais
-                  tu peux m’appeler François ! Je suis un développeur passionné
-                  avec un faible pour l’architecture logicielle et les
-                  interfaces utilisateur qui en jettent. Mon parcours m’a permis
-                  de construire des bases solides en programmation, et j’ai déjà
-                  plusieurs projets sympas à mon actif, comme une plateforme de
-                  gestion de bibliothèque en ligne, une app de restauration avec
-                  Angular, une app mobile de gestion d'habitude avec flutter...
-                </p>
-                <p
-                  className={`text-lg ${
-                    theme === "light" ? "text-gray-600" : "text-gray-300"
-                  } mb-4`}
-                >
-                  Ce qui me fait vibrer, c’est de créer des solutions techniques
-                  qui allient robustesse et simplicité d’utilisation. J’adore
-                  explorer de nouvelles technos et trouver des moyens innovants
-                  pour résoudre des problèmes – et je prends un vrai plaisir à
-                  développer des apps mobiles avec Flutter, où je peux laisser
-                  libre cours à ma créativité pour offrir des expériences
-                  fluides et modernes. Pour moi, un bon projet, c’est un savant
-                  mélange de code propre, d’architecture bien pensée et d’une
-                  expérience utilisateur fluide.
-                </p>
-                <p
-                  className={`text-lg ${
-                    theme === "light" ? "text-gray-600" : "text-gray-300"
-                  } mb-4`}
-                >
-                  Mon approche ? Je commence toujours par comprendre les
-                  besoins, puis je conçois une architecture modulaire avant de
-                  plonger dans le code. J’aime bien utiliser des outils comme
-                  UML pour visualiser mes idées, et je m’assure que tout reste
-                  scalable et maintenable. En dehors du dev, tu me trouveras
-                  probablement en train de suivre des séries ou d'être sur un
-                  terrain de foot ou de rêver à mon prochain voyage au Qatar –
-                  un pays qui m’inspire énormément !
-                </p>
-                <p
-                  className={`text-lg ${
-                    theme === "light" ? "text-gray-600" : "text-gray-300"
-                  }`}
-                >
-                  Si tu veux échanger sur un projet, une idée ou juste papoter
-                  tech, n’hésite pas à me contacter via la section Contact. Je
-                  suis toujours partant pour collaborer ou discuter
-                  d’opportunités excitantes !
-                </p>
-              </motion.div>
+              <img
+                src="/assets/lesaint4.jpg"
+                alt="François ADESU"
+                loading="lazy"
+              />
             </motion.div>
 
-            <h2 className="text-3xl font-bold mb-12 text-center">
-              Mon Parcours en Développement
-            </h2>
-
-            <div className="max-w-4xl mx-auto grid md:grid-cols-3 gap-4">
-              {/* Colonne 1 : Fondations */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5 }}
-                whileHover={{
-                  y: -10,
-                  boxShadow:
-                    "0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(59, 130, 246, 0.5)",
-                  borderColor:
-                    theme === "light"
-                      ? "rgb(96, 165, 250)"
-                      : "rgb(147, 197, 253)",
-                  transition: { duration: 0.3 },
-                }}
-                className={`p-6 rounded-xl shadow-lg transition-all duration-300 max-h-90 overflow-y-auto scrollbar-thin scrollbar-thumb-blue-500 scrollbar-track-blue-100 dark:scrollbar-thumb-blue-300 dark:scrollbar-track-gray-700 border-2 border-transparent ${
-                  theme === "light"
-                    ? "bg-gradient-to-br from-blue-50 to-purple-50 hover:bg-blue-100"
-                    : "bg-gradient-to-br from-gray-700 to-gray-800 hover:bg-gray-600"
-                }`}
-              >
-                <div className="flex items-center mb-4">
-                  <motion.div
-                    className={`p-2 rounded-full mr-3 transition-all duration-300 ${
-                      theme === "light" ? "bg-blue-100" : "bg-blue-900"
-                    }`}
-                    whileHover={{
-                      scale: [1, 1.2, 1, 1.2],
-                      rotate: 10,
-                      transition: { duration: 0.6, repeat: Infinity },
-                    }}
-                  >
-                    <Code
-                      className={`h-6 w-6 transition-colors duration-300 ${
-                        theme === "light"
-                          ? "text-blue-600 hover:text-blue-800"
-                          : "text-blue-300 hover:text-blue-500"
-                      }`}
-                    />
-                  </motion.div>
-                  <motion.h3
-                    className="text-xl font-semibold dark:text-white"
-                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                  >
-                    Débuts en Programmation
-                  </motion.h3>
-                </div>
-                <motion.p
-                  className={`${
-                    theme === "light" ? "text-gray-600" : "text-gray-300"
-                  }`}
-                  whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                >
-                  Initiation aux algorithmes et POO avec Java. Premiers projets
-                  web (HTML/CSS/JS) et découverte des bases de données
-                  relationnelles.
-                </motion.p>
-              </motion.div>
-
-              {/* Colonne 2 : Spécialisation */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                whileHover={{
-                  y: -10,
-                  boxShadow:
-                    "0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(139, 92, 246, 0.5)",
-                  borderColor:
-                    theme === "light"
-                      ? "rgb(139, 92, 246)"
-                      : "rgb(196, 181, 253)",
-                  transition: { duration: 0.3 },
-                }}
-                className={`p-6 rounded-xl shadow-lg transition-all duration-300 max-h-90 overflow-y-auto scrollbar-thin scrollbar-thumb-purple-500 scrollbar-track-purple-100 dark:scrollbar-thumb-purple-300 dark:scrollbar-track-gray-700 border-2 border-transparent ${
-                  theme === "light"
-                    ? "bg-gradient-to-br from-purple-50 to-pink-50 hover:bg-purple-100"
-                    : "bg-gradient-to-br from-gray-700 to-gray-800 hover:bg-gray-600"
-                }`}
-              >
-                <div className="flex items-center mb-4">
-                  <motion.div
-                    className={`p-2 rounded-full mr-3 transition-all duration-300 ${
-                      theme === "light" ? "bg-purple-100" : "bg-purple-900"
-                    }`}
-                    whileHover={{
-                      scale: [1, 1.2, 1, 1.2],
-                      rotate: 10,
-                      transition: { duration: 0.6, repeat: Infinity },
-                    }}
-                  >
-                    <Cpu
-                      className={`h-6 w-6 transition-colors duration-300 ${
-                        theme === "light"
-                          ? "text-purple-600 hover:text-purple-800"
-                          : "text-purple-300 hover:text-purple-500"
-                      }`}
-                    />
-                  </motion.div>
-                  <motion.h3
-                    className="text-xl font-semibold dark:text-white"
-                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                  >
-                    Architecture Logicielle
-                  </motion.h3>
-                </div>
-                <motion.p
-                  className={`${
-                    theme === "light" ? "text-gray-600" : "text-gray-300"
-                  }`}
-                  whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                >
-                  Conception de systèmes modulaires avec microservices.
-                  Expérience avec Docker, API REST. Développement d'applications
-                  fullstack.
-                </motion.p>
-              </motion.div>
-
-              {/* Colonne 3 : Aspirations */}
-              <motion.div
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: 0.4 }}
-                whileHover={{
-                  y: -10,
-                  boxShadow:
-                    "0 10px 20px rgba(0, 0, 0, 0.2), 0 0 15px rgba(244, 114, 182, 0.5)",
-                  borderColor:
-                    theme === "light"
-                      ? "rgb(244, 114, 182)"
-                      : "rgb(251, 182, 206)",
-                  transition: { duration: 0.3 },
-                }}
-                className={`p-6 rounded-xl shadow-lg transition-all duration-300 max-h-90 overflow-y-auto scrollbar-thin scrollbar-thumb-pink-500 scrollbar-track-pink-100 dark:scrollbar-thumb-pink-300 dark:scrollbar-track-gray-700 border-2 border-transparent ${
-                  theme === "light"
-                    ? "bg-gradient-to-br from-pink-50 to-orange-50 hover:bg-pink-100"
-                    : "bg-gradient-to-br from-gray-700 to-gray-800 hover:bg-gray-600"
-                }`}
-              >
-                <div className="flex items-center mb-4">
-                  <motion.div
-                    className={`p-2 rounded-full mr-3 transition-all duration-300 ${
-                      theme === "light" ? "bg-pink-100" : "bg-pink-900"
-                    }`}
-                    whileHover={{
-                      scale: [1, 1.2, 1, 1.2],
-                      rotate: 10,
-                      transition: { duration: 0.6, repeat: Infinity },
-                    }}
-                  >
-                    <Smartphone
-                      className={`h-6 w-6 transition-colors duration-300 ${
-                        theme === "light"
-                          ? "text-pink-600 hover:text-pink-800"
-                          : "text-pink-300 hover:text-pink-500"
-                      }`}
-                    />
-                  </motion.div>
-                  <motion.h3
-                    className="text-xl font-semibold dark:text-white"
-                    whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                  >
-                    Passion Web/Mobile
-                  </motion.h3>
-                </div>
-                <motion.p
-                  className={`${
-                    theme === "light" ? "text-gray-600" : "text-gray-300"
-                  }`}
-                  whileHover={{ scale: 1.05, transition: { duration: 0.3 } }}
-                >
-                  Création d'interfaces dynamiques avec React pour le Web et
-                  Flutter pour le Mobile. Particulièrement intéressé par les
-                  PWA(Progressive Web Apps) et l'optimisation des performances.
-                  À la recherche d'opportunités pour concilier une architecture
-                  robuste et UX moderne.
-                </motion.p>
-              </motion.div>
-            </div>
-
-            {/* Bannière complémentaire */}
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ delay: 0.6 }}
-              className="mt-12 bg-gradient-to-r from-blue-500 to-purple-600 dark:from-blue-600 dark:to-purple-800 text-white p-6 rounded-lg"
+              className="about-text"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.6, delay: 0.1 }}
             >
-              <h3 className="text-xl font-bold mb-2">Vision</h3>
               <p>
-                "Concevoir des solutions techniques élégantes qui marient
-                qualité architecturale et expérience utilisateur exceptionnelle,
-                particulièrement dans les domaines web et mobile."
+                Salut, moi c'est <strong>Kokouvi François ADESU</strong>, mais
+                tu peux m'appeler François ! Je suis un développeur passionné
+                avec un faible pour l'architecture logicielle et les interfaces
+                utilisateur qui en jettent.
               </p>
+              <p>
+                Ce qui me fait vibrer, c'est de créer des solutions techniques
+                qui allient robustesse et simplicité d'utilisation. J'adore
+                explorer de nouvelles technos et trouver des moyens innovants
+                pour résoudre des problèmes — et je prends un vrai plaisir à
+                développer des apps mobiles avec Flutter.
+              </p>
+              <p>
+                Mon approche ? Je commence toujours par comprendre les besoins,
+                puis je conçois une architecture modulaire avant de plonger dans
+                le code. En dehors du dev, tu me trouveras probablement en train
+                de suivre des séries, sur un terrain de foot ou de rêver à mon
+                prochain voyage.
+              </p>
+
+              <div className="vision-banner">
+                <h3>Vision</h3>
+                <p>
+                  "Concevoir des solutions techniques élégantes qui marient
+                  qualité architecturale et expérience utilisateur
+                  exceptionnelle, particulièrement dans les domaines web et
+                  mobile."
+                </p>
+              </div>
             </motion.div>
           </div>
-        </motion.section>
+        </section>
 
-        {/* Contact */}
-        <motion.section
-          id="contact"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className={`py-20 relative z-10 ${
-            theme === "light" ? "bg-gray-100" : "bg-gray-800"
-          }`}
-        >
-          <div className="container mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-10">Me contacter</h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.5 }}
-              className="mb-6"
+        {/* ── CONTACT ── */}
+        <section id="contact" className="section">
+          <span className="section-big-number">05</span>
+          <div className="section-header">
+            <p className="section-label">// travaillons ensemble</p>
+            <h2 className="section-title">Me contacter</h2>
+            <div className="section-line" />
+          </div>
+
+          <div className="contact-layout">
+            <div className="contact-info">
+              <h3>Discutons de votre projet</h3>
+              <p>
+                Envie de collaborer, de discuter tech ou d'explorer une
+                opportunité ? Je suis disponible et toujours enthousiaste à
+                l'idée de nouveaux défis.
+              </p>
+              <div className="contact-links">
+                <a href="tel:+22899553976" className="contact-link">
+                  <Phone size={16} /> (+228) 99 55 39 76
+                </a>
+                <a
+                  href="https://wa.me/+22946620072"
+                  className="contact-link"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <FaWhatsapp size={16} style={{ color: "var(--accent)" }} />{" "}
+                  Chat sur WhatsApp
+                </a>
+                <a
+                  href="mailto:k.francoisadesu@gmail.com"
+                  className="contact-link"
+                >
+                  <Mail size={16} /> k.francoisadesu@gmail.com
+                </a>
+              </div>
+            </div>
+
+            <form
+              onSubmit={handleSubmit}
+              style={{
+                background: "var(--surface)",
+                border: "1px solid var(--border)",
+                borderRadius: "16px",
+                padding: "2rem",
+              }}
             >
-              Envie de collaborer ou de discuter tech ? Envoyez-moi un message !
-            </motion.p>
-            <form onSubmit={handleFormSubmit} className="max-w-md mx-auto">
-              <input
-                type="text"
-                placeholder="Votre nom"
-                value={formData.name}
-                onChange={(e) => {
-                  console.log("Name input changed to:", e.target.value);
-                  setFormData((prev) => ({ ...prev, name: e.target.value }));
-                }}
-                className={`w-full p-2 mb-4 rounded ${
-                  theme === "light"
-                    ? "bg-gray-200 text-gray-900"
-                    : "bg-gray-700 text-white"
-                }`}
-                aria-label="Nom"
-              />
-              <input
-                type="email"
-                placeholder="Votre email"
-                value={formData.email}
-                onChange={(e) => {
-                  console.log("Email input changed to:", e.target.value);
-                  setFormData((prev) => ({ ...prev, email: e.target.value }));
-                }}
-                className={`w-full p-2 mb-4 rounded ${
-                  theme === "light"
-                    ? "bg-gray-200 text-gray-900"
-                    : "bg-gray-700 text-white"
-                }`}
-                aria-label="Email"
-              />
-              <textarea
-                placeholder="Votre message"
-                value={formData.message}
-                onChange={(e) => {
-                  console.log("Message input changed to:", e.target.value);
-                  setFormData((prev) => ({ ...prev, message: e.target.value }));
-                }}
-                className={`w-full p-2 mb-4 rounded ${
-                  theme === "light"
-                    ? "bg-gray-200 text-gray-900"
-                    : "bg-gray-700 text-white"
-                }`}
-                rows={4}
-                aria-label="Message"
-              ></textarea>
+              <div className="form-group">
+                <label className="form-label">Nom</label>
+                <input
+                  className="form-input"
+                  type="text"
+                  placeholder="Votre nom"
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, name: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Email</label>
+                <input
+                  className="form-input"
+                  type="email"
+                  placeholder="vous@exemple.com"
+                  value={formData.email}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, email: e.target.value }))
+                  }
+                />
+              </div>
+              <div className="form-group">
+                <label className="form-label">Message</label>
+                <textarea
+                  className="form-textarea"
+                  placeholder="Décrivez votre projet ou votre demande…"
+                  value={formData.message}
+                  onChange={(e) =>
+                    setFormData((p) => ({ ...p, message: e.target.value }))
+                  }
+                  rows={5}
+                />
+              </div>
               <button
                 type="submit"
-                className={`w-full ${
-                  theme === "light"
-                    ? "bg-cyan-600 hover:bg-cyan-700"
-                    : "bg-cyan-800 hover:bg-cyan-900"
-                } text-white px-4 py-2 rounded flex items-center justify-center`}
+                className="form-submit"
+                disabled={isSubmitting}
               >
                 {isSubmitting && (
                   <svg
-                    className="animate-spin h-5 w-5 mr-2"
+                    style={{
+                      animation: "spin 1s linear infinite",
+                      width: 16,
+                      height: 16,
+                    }}
                     viewBox="0 0 24 24"
                   >
                     <circle
-                      className="opacity-25"
                       cx="12"
                       cy="12"
                       r="10"
                       stroke="currentColor"
                       strokeWidth="4"
+                      style={{ opacity: 0.25 }}
+                      fill="none"
                     />
                     <path
-                      className="opacity-75"
                       fill="currentColor"
+                      style={{ opacity: 0.75 }}
                       d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                     />
                   </svg>
                 )}
-                {isSubmitting ? "Envoi..." : "Envoyer"}
+                {isSubmitting ? "Envoi…" : "Envoyer le message →"}
               </button>
-              {formStatus && <p className="mt-4 text-center">{formStatus}</p>}
+              {formStatus && (
+                <p
+                  style={{
+                    marginTop: "1rem",
+                    fontSize: "0.83rem",
+                    color: formStatus.includes("succès")
+                      ? "var(--accent)"
+                      : "#ff6b6b",
+                    textAlign: "center",
+                  }}
+                >
+                  {formStatus}
+                </p>
+              )}
             </form>
           </div>
-        </motion.section>
+        </section>
 
-        {/* CV */}
-        <motion.section
+        {/* ── CV ── */}
+        <section
           id="cv"
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className={`py-20 ${theme === "light" ? "bg-white" : "bg-gray-800"}`}
+          className="section"
+          style={{ background: "var(--surface)" }}
         >
-          <div className="container mx-auto text-center">
-            <h2 className="text-3xl font-bold mb-10">Mon CV</h2>
-            <motion.p
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
+          <span className="section-big-number">06</span>
+          <div className="section-header">
+            <p className="section-label">// mon parcours</p>
+            <h2 className="section-title">Curriculum Vitæ</h2>
+            <div className="section-line" />
+          </div>
+
+          <div className="cv-section">
+            <motion.div
+              className="cv-card"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="mb-6"
             >
-              Consultez ou téléchargez mon CV pour découvrir mon parcours et mes
-              compétences.
-            </motion.p>
-            <div className="max-w-3xl mx-auto mb-6">
-              {!showPDF ? (
-                <motion.button
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ duration: 0.5 }}
-                  onClick={() => {
-                    setShowPDF(true);
-                    const newWindow = window.open(
+              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📄</div>
+              <h3>ADESU François — CV</h3>
+              <p>Développeur Full-Stack & Mobile · Architecte logiciel</p>
+              <div className="cv-btns">
+                <button
+                  className="cv-btn cv-btn-primary"
+                  onClick={() =>
+                    window.open(
                       "/assets/ADESU_CV.pdf",
                       "_blank",
-                      "noopener,noreferrer"
-                    );
-                    if (!newWindow) {
-                      console.error(
-                        "Failed to open new window. A popup blocker might be preventing this."
-                      );
-                      alert(
-                        "L’ouverture du CV dans un nouvel onglet a été bloquée. Veuillez autoriser les pop-ups pour ce site ou utiliser le lien ci-dessous pour ouvrir le CV manuellement."
-                      );
-                    }
-                  }}
-                  className={`inline-block ${
-                    theme === "light"
-                      ? "bg-blue-600 hover:bg-blue-700"
-                      : "bg-blue-800 hover:bg-blue-900"
-                  } text-white px-6 py-3 rounded-lg font-semibold mb-4`}
+                      "noopener,noreferrer",
+                    )
+                  }
                 >
-                  Afficher le CV
-                </motion.button>
-              ) : (
-                <p className="text-green-500 mb-4">
-                  Le CV a été ouvert dans un nouvel onglet.
-                </p>
-              )}
-              {showPDF && (
-                <div className="mt-4">
-                  <p className="mb-2">
-                    Si le CV ne s’est pas ouvert (par exemple, à cause d’un
-                    bloqueur de pop-ups), vous pouvez l’ouvrir manuellement :
-                  </p>
-                  <a
-                    href="/assets/SIZER.pdf"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`inline-block ${
-                      theme === "light"
-                        ? "bg-blue-600 hover:bg-blue-700"
-                        : "bg-blue-800 hover:bg-blue-900"
-                    } text-white px-6 py-3 rounded-lg font-semibold mr-4 mb-4`}
-                  >
-                    Ouvrir le CV dans un nouvel onglet
-                  </a>
-                </div>
-              )}
-            </div>
-
-            <motion.a
-              href="/assets/ADESU_CV.pdf"
-              download
-              initial={{ opacity: 0, y: 50 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.8 }}
-              className={`inline-block ${
-                theme === "light"
-                  ? "bg-cyan-600 hover:bg-cyan-700"
-                  : "bg-cyan-800 hover:bg-cyan-900"
-              } text-white px-6 py-3 rounded-lg font-semibold mr-4 mb-4`}
-              onClick={(e) => {
-                console.log(
-                  "Attempting to download PDF from /assets/SIZER.pdf"
-                );
-                fetch("/assets/ADESU_CV.pdf")
-                  .then((response) => {
-                    if (!response.ok) {
-                      console.error("Download failed:", response.statusText);
-                      e.preventDefault();
-                      alert(
-                        "Erreur : Le fichier CV n’a pas pu être téléchargé. Vérifiez son emplacement dans public/assets/SIZER.pdf, ou utilisez le lien alternatif ci-dessous."
-                      );
-                    }
-                  })
-                  .catch((error) => {
-                    console.error("Download error:", error);
-                    e.preventDefault();
-                    alert(
-                      "Erreur : Le fichier CV n’a pas pu être téléchargé. Vérifiez son emplacement dans public/assets/SIZER.pdf, ou utilisez le lien alternatif ci-dessous."
-                    );
-                  });
-              }}
-            >
-              Télécharger mon CV
-            </motion.a>
-          </div>
-        </motion.section>
-
-        {/* Footer */}
-        <motion.footer
-          initial={{ opacity: 0, y: 50 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8 }}
-          className={`mt-auto py-12 ${
-            theme === "light"
-              ? "bg-gradient-to-r from-cyan-500 via-blue-500 to-purple-500"
-              : "bg-gradient-to-r from-cyan-800 via-blue-800 to-purple-800"
-          } text-white relative overflow-hidden`} // Ajout de via-blue pour un dégradé plus riche
-        >
-          {/* Effet de particules légères (optionnel, réutilise tsparticles si déjà configuré) */}
-          <div className="absolute inset-0 opacity-20 pointer-events-none">
-            <Particles
-              id="footer-particles"
-              // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-              // @ts-expect-error
-              init={particlesInit}
-              options={{
-                particles: {
-                  number: { value: 20 },
-                  color: { value: "#ffffff" },
-                  shape: { type: "circle" },
-                  opacity: { value: 0.3 },
-                  size: { value: { min: 1, max: 3 } },
-                  move: {
-                    enable: true,
-                    speed: 0.5,
-                    direction: "none",
-                    outModes: { default: "out" },
-                  },
-                },
-              }}
-            />
-          </div>
-
-          <div className="container mx-auto px-4 relative z-10">
-            {/* Section principale */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center md:text-left">
-              {/* Colonne 1 : Branding */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-              >
-                <motion.h3
-                  whileHover={{ scale: 1.05 }}
-                  className="text-2xl font-bold mb-4"
+                  <ExternalLink size={14} /> Ouvrir le CV
+                </button>
+                <a
+                  href="/assets/ADESU_CV.pdf"
+                  download
+                  className="cv-btn cv-btn-outline"
                 >
-                  ADESU-FLS
-                </motion.h3>
-                <p className="text-sm opacity-80">
-                  Développeur passionné, spécialisé en architecture logicielle
-                  et UX moderne.
-                </p>
-              </motion.div>
-
-              {/* Colonne 2 : Contact */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.4 }}
-              >
-                <h4 className="text-lg font-semibold mb-4">Me contacter</h4>
-                <div className="flex flex-col gap-3 items-center md:items-start">
-                  <motion.a
-                    href="tel:+22899553976"
-                    className="flex items-center gap-2 hover:text-cyan-200"
-                    whileHover={{ scale: 1.05, x: 5 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Phone className="w-5 h-5" />
-                    <span>(+228) 99553976 (Appel)</span>
-                  </motion.a>
-                  <motion.a
-                    href="https://wa.me/+22946620072?text=Salut%20François,%20je%20viens%20de%20voir%20ton%20portfolio%20et%20j'aimerais%20discuter%20d'un%20projet%20!"
-                    className="flex items-center gap-2 hover:text-cyan-200"
-                    whileHover={{ scale: 1.05, x: 5 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <FaWhatsapp className="w-5 h-5" />
-                    <span>Chat sur WhatsApp</span>
-                  </motion.a>
-                  <motion.a
-                    href="mailto:k.francoisadesu@gmail.com"
-                    className="flex items-center gap-2 hover:text-cyan-200"
-                    whileHover={{ scale: 1.05, x: 5 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Mail className="w-5 h-5" />
-                    <span>k.francoisadesu@gmail.com</span>
-                  </motion.a>
-                </div>
-              </motion.div>
-
-              {/* Colonne 3 : Liens utiles */}
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.8, delay: 0.6 }}
-              >
-                <h4 className="text-lg font-semibold mb-4">Liens utiles</h4>
-                <div className="flex flex-col gap-3 items-center md:items-start">
-                  <motion.a
-                    href="https://github.com/adekomen/portfolio.git"
-                    className="flex items-center gap-2 hover:text-cyan-200"
-                    whileHover={{ scale: 1.05, x: 5 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Github className="w-5 h-5" />
-                    <span>GitHub - Code source</span>
-                  </motion.a>
-                  <motion.a
-                    href="https://www.linkedin.com/in/kokouvi-fran%C3%A7ois-adesu-179347290/"
-                    className="flex items-center gap-2 hover:text-cyan-200"
-                    whileHover={{ scale: 1.05, x: 5 }}
-                    transition={{ duration: 0.3 }}
-                  >
-                    <Linkedin className="w-5 h-5" />
-                    <span>LinkedIn</span>
-                  </motion.a>
-                </div>
-              </motion.div>
-            </div>
-
-            {/* Ligne de copyright */}
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.8, delay: 0.8 }}
-              className="mt-8 pt-6 border-t border-white/20 text-center"
-            >
-              <p className="text-sm opacity-80">
-                © {new Date().getFullYear()} ADESU-FLS. Tous droits réservés.
-              </p>
+                  ↓ Télécharger
+                </a>
+              </div>
             </motion.div>
           </div>
-        </motion.footer>
-      </div>
+        </section>
+
+        {/* ── FOOTER ── */}
+        <footer className="footer">
+          <div className="footer-inner">
+            <div className="footer-brand">
+              <h3>ADESU-FLS</h3>
+              <p>
+                Développeur passionné, spécialisé en architecture logicielle et
+                UX moderne. Basé à Lomé, Togo.
+              </p>
+            </div>
+            <div>
+              <h4>Me contacter</h4>
+              <a href="tel:+22899553976" className="footer-link">
+                <Phone size={13} /> (+228) 99 55 39 76
+              </a>
+              <a
+                href="https://wa.me/+22946620072"
+                className="footer-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <FaWhatsapp size={13} /> WhatsApp
+              </a>
+              <a
+                href="mailto:k.francoisadesu@gmail.com"
+                className="footer-link"
+              >
+                <Mail size={13} /> k.francoisadesu@gmail.com
+              </a>
+            </div>
+            <div>
+              <h4>Liens</h4>
+              <a
+                href="https://github.com/adekomen"
+                className="footer-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Github size={13} /> GitHub
+              </a>
+              <a
+                href="https://www.linkedin.com/in/kokouvi-fran%C3%A7ois-adesu-179347290/"
+                className="footer-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Linkedin size={13} /> LinkedIn
+              </a>
+              <a
+                href="https://github.com/adekomen/portfolio.git"
+                className="footer-link"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                <Code size={13} /> Code source
+              </a>
+            </div>
+          </div>
+          <div className="footer-bottom">
+            © {new Date().getFullYear()} <span>ADESU-FLS</span> · Tous droits
+            réservés · Fait avec ♥ à Lomé
+          </div>
+        </footer>
+      </motion.div>
     </div>
   );
 };
