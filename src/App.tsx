@@ -1,8 +1,8 @@
-import { useState, useEffect, FormEvent, useRef } from "react";
+import { useState, useEffect, useCallback, FormEvent, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  Code,
-  Cpu,
+  Code2,
+  Layers,
   Smartphone,
   Menu,
   X,
@@ -10,22 +10,29 @@ import {
   Mail,
   Github,
   Linkedin,
-  ExternalLink,
-  ChevronLeft,
-  ChevronRight,
+  ArrowUpRight,
+  ArrowLeft,
+  ArrowRight,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { FaWhatsapp } from "react-icons/fa";
+import Particles, { initParticlesEngine } from "@tsparticles/react";
+import { loadAll } from "@tsparticles/all";
 import emailjs from "@emailjs/browser";
 import mermaid from "mermaid";
-
-// Google Fonts injection
-const fontLink = document.createElement("link");
-fontLink.href =
-  "https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&family=JetBrains+Mono:wght@400;500&display=swap";
-fontLink.rel = "stylesheet";
-document.head.appendChild(fontLink);
+import "react-pdf/dist/esm/Page/AnnotationLayer.css";
+import "react-pdf/dist/esm/Page/TextLayer.css";
 
 mermaid.initialize({ startOnLoad: true });
+
+/* ============================================================
+   DESIGN TOKENS
+   Palette  : encre profonde + cuivre signature (blueprint inversé)
+   Display  : Fraunces (serif à fort contraste, personnalité)
+   Body     : Inter
+   Mono     : JetBrains Mono (labels techniques, coordonnées de section)
+============================================================= */
 
 interface Project {
   id: number;
@@ -46,7 +53,7 @@ const projects: Project[] = [
     description:
       "Plateforme développée en PHP procédural avec architecture MVC.",
     longDescription:
-      "Gestion totale de bibliothèque en ligne qui permet de faire des achats de livres en ligne.",
+      "Gestion totale de bibliothèque en ligne qui permet de faire des achat de livre en ligne",
     technologies: ["PHP", "Bootstrap", "MySQL", "Javascript"],
     github: "https://github.com/adekomen/book-shop.git",
     demo: "http://lesaint.alwaysdata.net",
@@ -54,10 +61,10 @@ const projects: Project[] = [
   },
   {
     id: 2,
-    title: "Application de restauration",
+    title: "Une application pour la restauration",
     description:
-      "Plateforme où on peut trouver les mets du restaurant et faire une commande.",
-    longDescription: "Plateforme de restauration utilisant Angular.",
+      "Plateforme de restauration où on peut trouver les mets du restaurant et faire une commande.",
+    longDescription: "Plateforme utilisant Angular.",
     technologies: ["Angular", "Html & CSS", "Javascript"],
     github: "https://github.com/adekomen/kenfood_app.git",
     demo: "https://warm-sable-eaf70d.netlify.app/",
@@ -65,7 +72,7 @@ const projects: Project[] = [
   },
   {
     id: 3,
-    title: "Suivi d'habitudes",
+    title: "Une application de suivis d'habitude",
     description:
       "Une application Flutter pour suivre vos habitudes quotidiennes.",
     longDescription:
@@ -76,11 +83,11 @@ const projects: Project[] = [
   },
   {
     id: 4,
-    title: "Recherche d'hôtels",
+    title: "Une application pour trouver les hotels",
     description:
-      "Application React & Node.js pour chercher des hôtels, réalisée en équipe.",
+      "Une application React et Nodejs pour chercher les hotels, fait avec mon equipe de dev.",
     longDescription:
-      "Application Fullstack avec React, Node.js et MySQL pour gérer la recherche d'hôtels en ligne.",
+      "Une application Fullstack fait avec React pour le Frontend, Nodejs pour le backend et MySQL pour la base de données pour gérer les recherche d'hotel en ligne.",
     technologies: ["React", "Nodejs", "MySQL"],
     github: "https://github.com/adekomen/hotel_booking.git",
     demo: "https://hotelbooking-psi.vercel.app/",
@@ -88,929 +95,41 @@ const projects: Project[] = [
   },
   {
     id: 5,
-    title: "SIZER — Prise de mesures",
+    title: "Une application de prise de mesure",
     description:
-      "Solution digitale innovante pour simplifier la prise de mesures en couture.",
+      "SIZER, Une solution digitale innovante pour simplifier la prise de mesures et optimiser le travail dans le domaine de la couture",
     longDescription:
-      "Permet aux couturiers d'enregistrer, consulter, modifier et exporter les mensurations des clients, avec tailles standards et suggestions intelligentes.",
+      "Cette solution permet aux couturiers d'enregistrer, consulter, modifier et exporter facilement les mensurations des clients, tout en intégrant des tailles standards et un système de suggestion intelligent.",
     technologies: ["Flutter", "Dart", "Firebase", "Supabase"],
     github: "https://github.com/adekomen/sizer_app.git",
     image: "/assets/couturier1.png",
   },
 ];
 
-// ─── CSS VARIABLES & GLOBAL STYLES ───────────────────────────────────────────
-const injectStyles = () => {
-  const style = document.createElement("style");
-  style.textContent = `
-    :root {
-      --bg: #0A0A0F;
-      --surface: #12121C;
-      --surface2: #1A1A2E;
-      --accent: #0FF4C6;
-      --accent2: #7B2FBE;
-      --text: #E8E8F0;
-      --text-sub: #9090A8;
-      --border: rgba(255,255,255,0.07);
-      --font-display: 'Space Grotesk', sans-serif;
-      --font-body: 'Inter', sans-serif;
-      --font-mono: 'JetBrains Mono', monospace;
-    }
-    .light-mode {
-      --bg: #F4F4FA;
-      --surface: #FFFFFF;
-      --surface2: #EEEEF8;
-      --accent: #0891B2;
-      --accent2: #7B2FBE;
-      --text: #0A0A1A;
-      --text-sub: #60607A;
-      --border: rgba(0,0,0,0.08);
-    }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    html { scroll-behavior: smooth; }
-    body {
-      background: var(--bg);
-      color: var(--text);
-      font-family: var(--font-body);
-      overflow-x: hidden;
-    }
-    ::-webkit-scrollbar { width: 4px; }
-    ::-webkit-scrollbar-track { background: var(--bg); }
-    ::-webkit-scrollbar-thumb { background: var(--accent2); border-radius: 2px; }
+const skills = [
+  "JavaScript",
+  "TypeScript",
+  "PHP",
+  "React",
+  "Node.js",
+  "Angular",
+  "Flutter",
+  "Laravel",
+  "MongoDB",
+  "MySQL",
+  "Docker",
+  "UML",
+  "SQL",
+  "Python",
+];
 
-    .section-label {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      color: var(--accent);
-      letter-spacing: 0.2em;
-      text-transform: uppercase;
-      margin-bottom: 0.5rem;
-    }
-    .section-big-number {
-      font-family: var(--font-mono);
-      font-size: clamp(5rem, 12vw, 9rem);
-      color: var(--border);
-      font-weight: 700;
-      position: absolute;
-      right: 2rem;
-      top: 1.5rem;
-      line-height: 1;
-      pointer-events: none;
-      user-select: none;
-      letter-spacing: -0.05em;
-    }
-
-    /* ── SIDEBAR ─────────────────────────── */
-    .sidebar {
-      width: 240px;
-      background: var(--surface);
-      border-right: 1px solid var(--border);
-      height: 100vh;
-      position: fixed;
-      top: 0; left: 0;
-      display: flex;
-      flex-direction: column;
-      padding: 2rem 1.5rem;
-      z-index: 40;
-      transition: transform 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    .sidebar-logo {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text);
-      letter-spacing: 0.05em;
-      margin-bottom: 2.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-    .sidebar-logo span.dot {
-      width: 8px; height: 8px;
-      background: var(--accent);
-      border-radius: 50%;
-      display: inline-block;
-      animation: pulse-dot 2s ease-in-out infinite;
-    }
-    @keyframes pulse-dot {
-      0%,100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.4; transform: scale(0.7); }
-    }
-    .nav-link {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.6rem 0.75rem;
-      border-radius: 8px;
-      color: var(--text-sub);
-      text-decoration: none;
-      font-family: var(--font-body);
-      font-size: 0.875rem;
-      font-weight: 500;
-      transition: all 0.2s;
-      margin-bottom: 0.25rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .nav-link::before {
-      content: '';
-      position: absolute;
-      left: 0; top: 0; bottom: 0;
-      width: 2px;
-      background: var(--accent);
-      transform: scaleY(0);
-      transition: transform 0.2s;
-    }
-    .nav-link:hover {
-      color: var(--text);
-      background: var(--surface2);
-    }
-    .nav-link:hover::before { transform: scaleY(1); }
-    .nav-link .nav-icon {
-      font-size: 1rem;
-      width: 18px;
-      text-align: center;
-    }
-    .sidebar-socials {
-      display: flex;
-      gap: 0.75rem;
-      margin-top: auto;
-      padding-top: 1rem;
-      border-top: 1px solid var(--border);
-    }
-    .social-btn {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      display: flex; align-items: center; justify-content: center;
-      color: var(--text-sub);
-      text-decoration: none;
-      transition: all 0.2s;
-    }
-    .social-btn:hover {
-      background: var(--accent);
-      color: var(--bg);
-      border-color: var(--accent);
-    }
-
-    /* ── TOPBAR ──────────────────────────── */
-    .topbar {
-      position: fixed;
-      top: 0; right: 0;
-      background: var(--surface);
-      border-bottom: 1px solid var(--border);
-      padding: 0 2rem;
-      height: 56px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      z-index: 30;
-      backdrop-filter: blur(12px);
-      transition: left 0.3s cubic-bezier(0.4,0,0.2,1);
-    }
-    .topbar-quote {
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--accent);
-      opacity: 0.8;
-    }
-    .theme-toggle {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      padding: 0.3rem 0.7rem;
-      cursor: pointer;
-      color: var(--text-sub);
-      font-size: 0.85rem;
-      transition: all 0.2s;
-      display: flex; align-items: center; gap: 0.4rem;
-    }
-    .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
-    .hamburger {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 0.4rem;
-      cursor: pointer;
-      color: var(--text);
-      display: none;
-      align-items: center;
-      justify-content: center;
-    }
-
-    /* ── MAIN ────────────────────────────── */
-    .main-content {
-      min-height: 100vh;
-      display: flex;
-      flex-direction: column;
-      transition: margin-left 0.3s cubic-bezier(0.4,0,0.2,1);
-      padding-top: 56px;
-    }
-
-    /* ── HERO ────────────────────────────── */
-    .hero {
-      min-height: calc(100vh - 56px);
-      display: flex;
-      align-items: center;
-      padding: 4rem 3rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .hero-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 4rem;
-      align-items: center;
-      width: 100%;
-      max-width: 1100px;
-    }
-    .hero-eyebrow {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      color: var(--accent);
-      letter-spacing: 0.15em;
-      text-transform: uppercase;
-      margin-bottom: 1rem;
-    }
-    .hero-name {
-      font-family: var(--font-display);
-      font-size: clamp(2.5rem, 5vw, 4rem);
-      font-weight: 700;
-      line-height: 1.05;
-      color: var(--text);
-      margin-bottom: 0.5rem;
-    }
-    .hero-role {
-      font-family: var(--font-mono);
-      font-size: clamp(1rem, 2vw, 1.3rem);
-      color: var(--text-sub);
-      margin-bottom: 1.5rem;
-      min-height: 1.8em;
-    }
-    .hero-role .cursor {
-      display: inline-block;
-      width: 2px;
-      height: 1.1em;
-      background: var(--accent);
-      vertical-align: middle;
-      margin-left: 2px;
-      animation: blink 1s step-end infinite;
-    }
-    @keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-    .hero-desc {
-      font-size: 0.95rem;
-      color: var(--text-sub);
-      line-height: 1.7;
-      margin-bottom: 2rem;
-      max-width: 440px;
-    }
-    .hero-cta {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: var(--accent);
-      color: var(--bg);
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 0.875rem;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      text-decoration: none;
-      transition: all 0.2s;
-      letter-spacing: 0.02em;
-    }
-    .hero-cta:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(15,244,198,0.3);
-    }
-    .hero-cta-ghost {
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      background: transparent;
-      color: var(--text-sub);
-      font-family: var(--font-display);
-      font-weight: 500;
-      font-size: 0.875rem;
-      padding: 0.75rem 1.5rem;
-      border-radius: 8px;
-      text-decoration: none;
-      border: 1px solid var(--border);
-      transition: all 0.2s;
-      margin-left: 0.75rem;
-    }
-    .hero-cta-ghost:hover { border-color: var(--accent); color: var(--accent); }
-
-    /* Hero image */
-    .hero-image-wrap {
-      position: relative;
-      border-radius: 20px;
-      overflow: hidden;
-      aspect-ratio: 4/5;
-      max-height: 520px;
-    }
-    .hero-image-wrap::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(15,244,198,0.12) 0%, rgba(123,47,190,0.12) 100%);
-      z-index: 1;
-      pointer-events: none;
-    }
-    .hero-image-wrap::after {
-      content: '';
-      position: absolute;
-      inset: -1px;
-      border-radius: 20px;
-      border: 1px solid rgba(15,244,198,0.2);
-      pointer-events: none;
-      z-index: 2;
-    }
-    .hero-image-wrap img {
-      width: 100%; height: 100%;
-      object-fit: cover;
-      object-position: center top;
-      display: block;
-    }
-    /* Background glow */
-    .hero-glow {
-      position: absolute;
-      width: 500px; height: 500px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(123,47,190,0.15) 0%, transparent 70%);
-      top: -100px; right: -100px;
-      pointer-events: none;
-    }
-    .hero-glow2 {
-      position: absolute;
-      width: 300px; height: 300px;
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(15,244,198,0.1) 0%, transparent 70%);
-      bottom: 50px; left: 10%;
-      pointer-events: none;
-    }
-
-    /* ── SECTION BASE ────────────────────── */
-    .section {
-      padding: 5rem 3rem;
-      position: relative;
-      overflow: hidden;
-    }
-    .section-header {
-      margin-bottom: 3rem;
-      position: relative;
-    }
-    .section-title {
-      font-family: var(--font-display);
-      font-size: clamp(1.8rem, 3.5vw, 2.5rem);
-      font-weight: 700;
-      color: var(--text);
-      line-height: 1.1;
-    }
-    .section-line {
-      width: 40px;
-      height: 3px;
-      background: linear-gradient(90deg, var(--accent), var(--accent2));
-      border-radius: 2px;
-      margin-top: 0.75rem;
-    }
-
-    /* ── PROJECTS ────────────────────────── */
-    .filter-bar {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.5rem;
-      margin-bottom: 2.5rem;
-    }
-    .filter-pill {
-      font-family: var(--font-mono);
-      font-size: 0.75rem;
-      padding: 0.35rem 0.9rem;
-      border-radius: 20px;
-      border: 1px solid var(--border);
-      background: transparent;
-      color: var(--text-sub);
-      cursor: pointer;
-      transition: all 0.2s;
-      letter-spacing: 0.05em;
-    }
-    .filter-pill:hover, .filter-pill.active {
-      background: var(--accent);
-      color: var(--bg);
-      border-color: var(--accent);
-    }
-    .projects-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-      gap: 1.5rem;
-    }
-    .project-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      overflow: hidden;
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.4,0,0.2,1);
-      position: relative;
-    }
-    .project-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(15,244,198,0.3);
-      box-shadow: 0 12px 32px rgba(0,0,0,0.3), 0 0 0 1px rgba(15,244,198,0.1);
-    }
-    .project-img {
-      width: 100%;
-      height: 180px;
-      object-fit: cover;
-      display: block;
-      transition: transform 0.4s ease;
-    }
-    .project-card:hover .project-img { transform: scale(1.03); }
-    .project-img-wrap { overflow: hidden; position: relative; }
-    .project-img-overlay {
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(to top, rgba(10,10,15,0.8) 0%, transparent 50%);
-      opacity: 0;
-      transition: opacity 0.3s;
-      display: flex;
-      align-items: flex-end;
-      padding: 1rem;
-      gap: 0.5rem;
-    }
-    .project-card:hover .project-img-overlay { opacity: 1; }
-    .project-link-chip {
-      font-family: var(--font-mono);
-      font-size: 0.7rem;
-      padding: 0.3rem 0.6rem;
-      border-radius: 6px;
-      background: var(--accent);
-      color: var(--bg);
-      text-decoration: none;
-      display: flex; align-items: center; gap: 0.3rem;
-      transition: opacity 0.2s;
-    }
-    .project-link-chip:hover { opacity: 0.85; }
-    .project-body {
-      padding: 1.25rem 1.5rem 1.5rem;
-    }
-    .project-techs {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.4rem;
-      margin-bottom: 0.75rem;
-    }
-    .tech-badge {
-      font-family: var(--font-mono);
-      font-size: 0.67rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      background: var(--surface2);
-      color: var(--accent);
-      border: 1px solid rgba(15,244,198,0.2);
-      letter-spacing: 0.04em;
-    }
-    .project-title {
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 0.4rem;
-      line-height: 1.3;
-    }
-    .project-desc {
-      font-size: 0.83rem;
-      color: var(--text-sub);
-      line-height: 1.6;
-    }
-    .pagination {
-      display: flex;
-      align-items: center;
-      gap: 1rem;
-      margin-top: 2.5rem;
-      justify-content: center;
-    }
-    .page-btn {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-sub);
-      cursor: pointer;
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .page-btn:hover:not(:disabled) { border-color: var(--accent); color: var(--accent); }
-    .page-btn:disabled { opacity: 0.3; cursor: not-allowed; }
-    .page-info {
-      font-family: var(--font-mono);
-      font-size: 0.78rem;
-      color: var(--text-sub);
-    }
-
-    /* ── MODAL ───────────────────────────── */
-    .modal-backdrop {
-      position: fixed;
-      inset: 0;
-      background: rgba(0,0,0,0.7);
-      backdrop-filter: blur(4px);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      padding: 1rem;
-    }
-    .modal-box {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      max-width: 640px;
-      width: 100%;
-      max-height: 90vh;
-      overflow-y: auto;
-      padding: 2rem;
-      position: relative;
-    }
-    .modal-close {
-      position: absolute;
-      top: 1rem; right: 1rem;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      width: 32px; height: 32px;
-      cursor: pointer;
-      color: var(--text-sub);
-      display: flex; align-items: center; justify-content: center;
-      transition: all 0.2s;
-    }
-    .modal-close:hover { background: rgba(255,80,80,0.1); color: #ff5050; border-color: rgba(255,80,80,0.3); }
-
-    /* ── SKILLS ──────────────────────────── */
-    .skills-grid {
-      display: flex;
-      flex-wrap: wrap;
-      gap: 0.75rem;
-    }
-    .skill-chip {
-      font-family: var(--font-mono);
-      font-size: 0.8rem;
-      padding: 0.5rem 1rem;
-      border-radius: 8px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-sub);
-      transition: all 0.2s;
-      cursor: default;
-    }
-    .skill-chip:hover {
-      background: var(--surface2);
-      border-color: var(--accent);
-      color: var(--accent);
-      transform: translateY(-2px);
-    }
-    .journey-cards {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 1.5rem;
-      margin-top: 3rem;
-    }
-    .journey-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 1.75rem;
-      transition: all 0.25s;
-    }
-    .journey-card:hover {
-      transform: translateY(-4px);
-      border-color: rgba(15,244,198,0.3);
-    }
-    .journey-icon {
-      width: 44px; height: 44px;
-      border-radius: 10px;
-      display: flex; align-items: center; justify-content: center;
-      margin-bottom: 1rem;
-    }
-    .journey-card h3 {
-      font-family: var(--font-display);
-      font-size: 1rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 0.6rem;
-    }
-    .journey-card p {
-      font-size: 0.84rem;
-      color: var(--text-sub);
-      line-height: 1.65;
-    }
-
-    /* ── ABOUT ───────────────────────────── */
-    .about-grid {
-      display: grid;
-      grid-template-columns: 260px 1fr;
-      gap: 3rem;
-      align-items: start;
-    }
-    .about-photo {
-      border-radius: 16px;
-      overflow: hidden;
-      aspect-ratio: 3/4;
-      border: 1px solid var(--border);
-      position: relative;
-    }
-    .about-photo::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(15,244,198,0.08) 0%, rgba(123,47,190,0.08) 100%);
-    }
-    .about-photo img { width: 100%; height: 100%; object-fit: cover; display: block; }
-    .about-text p {
-      font-size: 0.9rem;
-      color: var(--text-sub);
-      line-height: 1.8;
-      margin-bottom: 1.2rem;
-    }
-    .about-text p strong { color: var(--text); }
-    .vision-banner {
-      background: linear-gradient(135deg, rgba(15,244,198,0.08) 0%, rgba(123,47,190,0.12) 100%);
-      border: 1px solid rgba(15,244,198,0.15);
-      border-radius: 12px;
-      padding: 1.5rem 2rem;
-      margin-top: 2rem;
-    }
-    .vision-banner h3 {
-      font-family: var(--font-display);
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--accent);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 0.5rem;
-    }
-    .vision-banner p {
-      font-size: 0.9rem;
-      color: var(--text-sub);
-      font-style: italic;
-      line-height: 1.7;
-    }
-
-    /* ── CONTACT ─────────────────────────── */
-    .contact-layout {
-      display: grid;
-      grid-template-columns: 1fr 1.4fr;
-      gap: 4rem;
-      align-items: start;
-    }
-    .contact-info h3 {
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.75rem;
-    }
-    .contact-info p {
-      font-size: 0.88rem;
-      color: var(--text-sub);
-      line-height: 1.75;
-      margin-bottom: 2rem;
-    }
-    .contact-links { display: flex; flex-direction: column; gap: 0.75rem; }
-    .contact-link {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 0.75rem 1rem;
-      border-radius: 10px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      color: var(--text-sub);
-      text-decoration: none;
-      font-size: 0.85rem;
-      transition: all 0.2s;
-    }
-    .contact-link:hover { border-color: var(--accent); color: var(--text); }
-    .contact-link svg { color: var(--accent); flex-shrink: 0; }
-    .form-group { margin-bottom: 1rem; }
-    .form-label {
-      display: block;
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--text-sub);
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      margin-bottom: 0.4rem;
-    }
-    .form-input, .form-textarea {
-      width: 100%;
-      background: var(--bg);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 0.75rem 1rem;
-      color: var(--text);
-      font-family: var(--font-body);
-      font-size: 0.88rem;
-      outline: none;
-      transition: border-color 0.2s;
-    }
-    .form-input:focus, .form-textarea:focus { border-color: var(--accent); }
-    .form-textarea { resize: vertical; min-height: 120px; }
-    .form-submit {
-      width: 100%;
-      background: var(--accent);
-      color: var(--bg);
-      border: none;
-      border-radius: 10px;
-      padding: 0.85rem;
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 0.9rem;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
-      margin-top: 1.25rem;
-    }
-    .form-submit:hover { box-shadow: 0 6px 20px rgba(15,244,198,0.25); transform: translateY(-1px); }
-    .form-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-
-    /* ── CV ──────────────────────────────── */
-    .cv-section {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 1.5rem;
-    }
-    .cv-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 2.5rem 3rem;
-      text-align: center;
-      max-width: 480px;
-    }
-    .cv-card h3 {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 600;
-      color: var(--text);
-      margin-bottom: 0.5rem;
-    }
-    .cv-card p { font-size: 0.85rem; color: var(--text-sub); margin-bottom: 1.5rem; }
-    .cv-btns { display: flex; gap: 0.75rem; flex-wrap: wrap; justify-content: center; }
-    .cv-btn {
-      padding: 0.7rem 1.4rem;
-      border-radius: 8px;
-      font-family: var(--font-display);
-      font-weight: 600;
-      font-size: 0.85rem;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.2s;
-      cursor: pointer;
-      border: none;
-    }
-    .cv-btn-primary {
-      background: var(--accent);
-      color: var(--bg);
-    }
-    .cv-btn-primary:hover { box-shadow: 0 6px 20px rgba(15,244,198,0.25); transform: translateY(-1px); }
-    .cv-btn-outline {
-      background: transparent;
-      color: var(--text-sub);
-      border: 1px solid var(--border) !important;
-    }
-    .cv-btn-outline:hover { border-color: var(--accent) !important; color: var(--accent); }
-
-    /* ── FOOTER ──────────────────────────── */
-    .footer {
-      background: var(--surface);
-      border-top: 1px solid var(--border);
-      padding: 3rem;
-    }
-    .footer-inner {
-      display: grid;
-      grid-template-columns: repeat(3, 1fr);
-      gap: 2rem;
-      margin-bottom: 2.5rem;
-    }
-    .footer-brand h3 {
-      font-family: var(--font-display);
-      font-size: 1.1rem;
-      font-weight: 700;
-      color: var(--text);
-      margin-bottom: 0.5rem;
-    }
-    .footer-brand p { font-size: 0.82rem; color: var(--text-sub); line-height: 1.6; }
-    .footer h4 {
-      font-family: var(--font-display);
-      font-size: 0.8rem;
-      font-weight: 600;
-      color: var(--text);
-      text-transform: uppercase;
-      letter-spacing: 0.1em;
-      margin-bottom: 1rem;
-    }
-    .footer-link {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      color: var(--text-sub);
-      text-decoration: none;
-      font-size: 0.83rem;
-      margin-bottom: 0.6rem;
-      transition: color 0.2s;
-    }
-    .footer-link:hover { color: var(--accent); }
-    .footer-bottom {
-      border-top: 1px solid var(--border);
-      padding-top: 1.5rem;
-      text-align: center;
-      font-family: var(--font-mono);
-      font-size: 0.72rem;
-      color: var(--text-sub);
-    }
-    .footer-bottom span { color: var(--accent); }
-
-    /* ── RESPONSIVE ──────────────────────── */
-    @media (max-width: 1024px) {
-      .journey-cards { grid-template-columns: 1fr 1fr; }
-    }
-    @media (max-width: 768px) {
-      .hamburger { display: flex !important; }
-      .hero { padding: 2rem 1.5rem; }
-      .hero-grid { grid-template-columns: 1fr; gap: 2rem; }
-      .hero-image-wrap { max-height: 320px; }
-      .section { padding: 3.5rem 1.5rem; }
-      .about-grid { grid-template-columns: 1fr; }
-      .contact-layout { grid-template-columns: 1fr; }
-      .journey-cards { grid-template-columns: 1fr; }
-      .footer-inner { grid-template-columns: 1fr; }
-      .footer { padding: 2rem 1.5rem; }
-    }
-    @media (max-width: 480px) {
-      .hero-name { font-size: 2rem; }
-      .projects-grid { grid-template-columns: 1fr; }
-    }
-
-    @media (prefers-reduced-motion: reduce) {
-      * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
-    }
-
-    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
-  `;
-  document.head.appendChild(style);
-};
-injectStyles();
-
-// ─── TYPING EFFECT HOOK ───────────────────────────────────────────────────────
-const useTyping = (phrases: string[], speed = 60, pause = 2000) => {
-  const [text, setText] = useState("");
-  const [phase, setPhase] = useState<"typing" | "pausing" | "deleting">(
-    "typing",
-  );
-  const [idx, setIdx] = useState(0);
-  const [charIdx, setCharIdx] = useState(0);
-
-  useEffect(() => {
-    let timeout: ReturnType<typeof setTimeout>;
-    const current = phrases[idx];
-    if (phase === "typing") {
-      if (charIdx < current.length) {
-        timeout = setTimeout(() => {
-          setText(current.slice(0, charIdx + 1));
-          setCharIdx((c) => c + 1);
-        }, speed);
-      } else {
-        timeout = setTimeout(() => setPhase("pausing"), pause);
-      }
-    } else if (phase === "pausing") {
-      timeout = setTimeout(() => setPhase("deleting"), 300);
-    } else {
-      if (charIdx > 0) {
-        timeout = setTimeout(() => {
-          setText(current.slice(0, charIdx - 1));
-          setCharIdx((c) => c - 1);
-        }, speed / 2);
-      } else {
-        setIdx((i) => (i + 1) % phrases.length);
-        setPhase("typing");
-      }
-    }
-    return () => clearTimeout(timeout);
-  }, [text, phase, idx, charIdx, phrases, speed, pause]);
-
-  return text;
-};
-
-// ─── PROJECT MODAL ────────────────────────────────────────────────────────────
+/* ---------- Modal projet ---------- */
 const ProjectModal: React.FC<{
   project: Project | null;
   onClose: () => void;
 }> = ({ project, onClose }) => {
   const mermaidRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     if (project?.uml && mermaidRef.current) {
       mermaid.render("mermaid-diagram", project.uml).then(({ svg }) => {
@@ -1018,189 +137,230 @@ const ProjectModal: React.FC<{
       });
     }
   }, [project]);
+
   if (!project) return null;
 
   return (
-    <AnimatePresence>
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      style={{ background: "rgba(7,8,11,0.78)", backdropFilter: "blur(6px)" }}
+      onClick={onClose}
+    >
       <motion.div
-        className="modal-backdrop"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        exit={{ opacity: 0 }}
-        onClick={onClose}
+        initial={{ y: 24, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        exit={{ y: 24, opacity: 0 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="relative w-full max-w-2xl max-h-[88vh] overflow-y-auto rounded-sm"
+        style={{
+          background: "var(--surface)",
+          border: "1px solid var(--line)",
+        }}
+        onClick={(e) => e.stopPropagation()}
       >
-        <motion.div
-          className="modal-box"
-          initial={{ scale: 0.92, opacity: 0, y: 20 }}
-          animate={{ scale: 1, opacity: 1, y: 0 }}
-          exit={{ scale: 0.92, opacity: 0, y: 20 }}
-          transition={{ type: "spring", damping: 25, stiffness: 300 }}
-          onClick={(e) => e.stopPropagation()}
-        >
-          <button className="modal-close" onClick={onClose}>
-            <X size={14} />
-          </button>
-          <div className="section-label" style={{ marginBottom: "0.5rem" }}>
-            Projet #{project.id.toString().padStart(2, "0")}
-          </div>
-          <h2
-            style={{
-              fontFamily: "var(--font-display)",
-              fontSize: "1.3rem",
-              fontWeight: 700,
-              color: "var(--text)",
-              marginBottom: "1.25rem",
-              paddingRight: "2rem",
-            }}
+        <div className="h-1 w-full" style={{ background: "var(--accent)" }} />
+        <div className="p-8">
+          <p
+            className="mb-2 text-xs tracking-[0.2em] uppercase"
+            style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}
+          >
+            Dossier projet
+          </p>
+          <h3
+            className="text-2xl md:text-3xl mb-4"
+            style={{ fontFamily: "var(--font-display)", color: "var(--text)" }}
           >
             {project.title}
-          </h2>
+          </h3>
           <div
-            style={{
-              borderRadius: "12px",
-              overflow: "hidden",
-              marginBottom: "1.5rem",
-              aspectRatio: "16/7",
-            }}
+            className="w-full h-56 mb-6 overflow-hidden rounded-sm"
+            style={{ border: "1px solid var(--line)" }}
           >
             <img
               src={project.image}
               alt={project.title}
-              style={{
-                width: "100%",
-                height: "100%",
-                objectFit: "cover",
-                display: "block",
-              }}
+              className="w-full h-full object-cover"
+              loading="lazy"
             />
           </div>
           <p
-            style={{
-              fontSize: "0.87rem",
-              color: "var(--text-sub)",
-              lineHeight: 1.75,
-              marginBottom: "1.25rem",
-            }}
+            className="mb-6 leading-relaxed"
+            style={{ color: "var(--text-muted)" }}
           >
             {project.longDescription}
           </p>
-          <div
-            style={{
-              display: "flex",
-              flexWrap: "wrap",
-              gap: "0.4rem",
-              marginBottom: "1.5rem",
-            }}
-          >
+          <div className="flex flex-wrap gap-2 mb-8">
             {project.technologies.map((t) => (
-              <span key={t} className="tech-badge">
+              <span
+                key={t}
+                className="px-3 py-1 text-xs rounded-sm"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  border: "1px solid var(--line)",
+                  color: "var(--text-muted)",
+                }}
+              >
                 {t}
               </span>
             ))}
           </div>
           {project.uml && (
-            <div
-              ref={mermaidRef}
-              className="mermaid"
-              style={{ marginBottom: "1.5rem" }}
-            />
+            <div className="mb-8">
+              <h4
+                className="text-xs tracking-[0.2em] uppercase mb-3"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--accent)",
+                }}
+              >
+                Diagramme UML
+              </h4>
+              <div ref={mermaidRef} className="mermaid" />
+            </div>
           )}
-          <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <div className="flex gap-6">
             {project.github && (
               <a
                 href={project.github}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="project-link-chip"
+                className="inline-flex items-center gap-1 text-sm font-medium"
+                style={{ color: "var(--text)" }}
               >
-                <Github size={12} /> GitHub
+                GitHub <ArrowUpRight size={14} />
               </a>
             )}
             {project.demo && (
               <a
                 href={project.demo}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="project-link-chip"
-                style={{ background: "var(--accent2)" }}
+                className="inline-flex items-center gap-1 text-sm font-medium"
+                style={{ color: "var(--accent)" }}
               >
-                <ExternalLink size={12} /> Démo live
+                Voir la démo <ArrowUpRight size={14} />
               </a>
             )}
           </div>
-        </motion.div>
+          <button
+            onClick={onClose}
+            className="mt-8 text-xs tracking-[0.15em] uppercase"
+            style={{
+              fontFamily: "var(--font-mono)",
+              color: "var(--text-muted)",
+            }}
+          >
+            Fermer ✕
+          </button>
+        </div>
       </motion.div>
-    </AnimatePresence>
+    </motion.div>
   );
 };
 
-// ─── APP ──────────────────────────────────────────────────────────────────────
+/* ---------- Étiquette de section façon coordonnée de plan ---------- */
+const SectionTag: React.FC<{ index: string; label: string }> = ({
+  index,
+  label,
+}) => (
+  <div className="flex items-center gap-3 mb-4">
+    <span
+      style={{ fontFamily: "var(--font-mono)", color: "var(--accent)" }}
+      className="text-sm"
+    >
+      §{index}
+    </span>
+    <span
+      className="h-px flex-1 max-w-[40px]"
+      style={{ background: "var(--line)" }}
+    />
+    <span
+      style={{ fontFamily: "var(--font-mono)", color: "var(--text-muted)" }}
+      className="text-xs tracking-[0.25em] uppercase"
+    >
+      {label}
+    </span>
+  </div>
+);
+
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<"dark" | "light">(
-    (localStorage.getItem("theme") as "dark" | "light") || "dark",
+  const [theme, setTheme] = useState<"light" | "dark">(
+    (localStorage.getItem("theme") as "light" | "dark") || "dark",
   );
-  const [filter, setFilter] = useState("Tous");
+  const [filter, setFilter] = useState<string>("Tous");
   const [selectedProject, setSelectedProject] = useState<Project | null>(null);
   const [formData, setFormData] = useState({
     name: "",
     email: "",
     message: "",
   });
-  const [formStatus, setFormStatus] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const [formStatus, setFormStatus] = useState<string>("");
+  const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(
+    typeof window !== "undefined" ? window.innerWidth >= 768 : true,
+  );
+  const [showPDF, setShowPDF] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const projectsPerPage = 6;
+  const [particlesReady, setParticlesReady] = useState(false);
 
-  const typedRole = useTyping([
-    "Développeur Full-Stack",
-    "Architecte Logiciel",
-    "Dev Mobile Flutter",
-    "Passionné d'UX",
-  ]);
+  useEffect(() => {
+    initParticlesEngine(async (engine) => {
+      await loadAll(engine);
+    }).then(() => setParticlesReady(true));
+  }, []);
 
   useEffect(() => {
     localStorage.setItem("theme", theme);
-    document.documentElement.className = theme === "light" ? "light-mode" : "";
+    document.documentElement.classList.toggle("dark", theme === "dark");
   }, [theme]);
 
   useEffect(() => {
-    const onResize = () => setIsSidebarOpen(window.innerWidth >= 768);
-    onResize();
-    window.addEventListener("resize", onResize);
-    return () => window.removeEventListener("resize", onResize);
+    const handleResize = () => setIsSidebarOpen(window.innerWidth >= 768);
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const uniqueTechs = [
-    "Tous",
-    ...Array.from(new Set(projects.flatMap((p) => p.technologies))),
-  ];
-  const filtered =
+  const toggleTheme = () => setTheme(theme === "light" ? "dark" : "light");
+  const toggleSidebar = () => setIsSidebarOpen(!isSidebarOpen);
+
+  const uniqueTechnologies = Array.from(
+    new Set(projects.flatMap((p) => p.technologies)),
+  );
+  const filteredProjects =
     filter === "Tous"
       ? projects
       : projects.filter((p) => p.technologies.includes(filter));
-  const totalPages = Math.ceil(filtered.length / projectsPerPage);
-  const currentProjects = filtered.slice(
-    (currentPage - 1) * projectsPerPage,
-    currentPage * projectsPerPage,
-  );
 
-  const handleSubmit = (e: FormEvent) => {
+  const projectsPerPage = 6;
+  const indexOfLastProject = currentPage * projectsPerPage;
+  const indexOfFirstProject = indexOfLastProject - projectsPerPage;
+  const currentProjects = filteredProjects.slice(
+    indexOfFirstProject,
+    indexOfLastProject,
+  );
+  const totalPages = Math.ceil(filteredProjects.length / projectsPerPage);
+
+  const handlePreviousPage = () =>
+    currentPage > 1 && setCurrentPage(currentPage - 1);
+  const handleNextPage = () =>
+    currentPage < totalPages && setCurrentPage(currentPage + 1);
+
+  const handleFormSubmit = (e: FormEvent) => {
     e.preventDefault();
     if (
       !formData.name.trim() ||
       !formData.email.trim() ||
       !formData.message.trim()
     ) {
-      setFormStatus("Veuillez remplir tous les champs.");
+      setFormStatus("Veuillez remplir tous les champs correctement.");
       return;
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      setFormStatus("Email invalide.");
+      setFormStatus("Veuillez entrer un email valide.");
       return;
     }
     setIsSubmitting(true);
-    setFormStatus("Envoi en cours…");
+    setFormStatus("Envoi en cours...");
     emailjs
       .send(
         "service_petyfkl",
@@ -1212,297 +372,606 @@ const App: React.FC = () => {
         setFormStatus("Message envoyé avec succès !");
         setFormData({ name: "", email: "", message: "" });
       })
-      .catch(() => setFormStatus("Erreur lors de l'envoi. Réessayez."))
+      .catch((error) => {
+        setFormStatus(
+          `Erreur lors de l'envoi : ${error.text || "Vérifiez votre connexion ou les clés EmailJS."}`,
+        );
+      })
       .finally(() => setIsSubmitting(false));
   };
 
-  const sidebarX = isSidebarOpen ? 0 : -240;
-  const mainML = isSidebarOpen ? 240 : 0;
+  const particlesLoaded = useCallback(async () => {}, []);
+
+  const isLight = theme === "light";
+
+  const navItems = [
+    { href: "#home", label: "Accueil", num: "00" },
+    { href: "#about", label: "À propos", num: "01" },
+    { href: "#projects", label: "Projets", num: "02" },
+    { href: "#skills", label: "Compétences", num: "03" },
+    { href: "#contact", label: "Contact", num: "04" },
+    { href: "#cv", label: "CV", num: "05" },
+  ];
 
   return (
     <div
-      style={{
-        minHeight: "100vh",
-        background: "var(--bg)",
-        color: "var(--text)",
-      }}
+      style={
+        {
+          "--bg": isLight ? "#F5F3EE" : "#0B0D12",
+          "--surface": isLight ? "#FFFFFF" : "#13161D",
+          "--surface-alt": isLight ? "#ECE8DF" : "#171B24",
+          "--text": isLight ? "#191815" : "#E7E5E0",
+          "--text-muted": isLight ? "#5C5A53" : "#8B8F99",
+          "--line": isLight ? "#DBD6CA" : "#252932",
+          "--accent": "#E8A23D",
+          "--accent-soft": isLight
+            ? "rgba(232,162,61,0.12)"
+            : "rgba(232,162,61,0.14)",
+          "--font-display": "'Fraunces', Georgia, serif",
+          "--font-body": "'Inter', system-ui, sans-serif",
+          "--font-mono": "'JetBrains Mono', monospace",
+          background: "var(--bg)",
+          color: "var(--text)",
+          fontFamily: "var(--font-body)",
+        } as React.CSSProperties
+      }
+      className="min-h-screen flex relative transition-colors duration-300"
     >
-      {/* ── SIDEBAR ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,500;9..144,600;9..144,700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap');
+        ::selection { background: var(--accent); color: #0B0D12; }
+        a { color: inherit; }
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+        }
+      `}</style>
+
+      {/* Bouton menu mobile */}
+      <div className="md:hidden fixed top-4 left-4 z-50">
+        <button
+          onClick={toggleSidebar}
+          className="p-2.5 rounded-sm"
+          style={{
+            background: "var(--surface)",
+            border: "1px solid var(--line)",
+          }}
+          aria-label="Basculer le menu"
+        >
+          {isSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+        </button>
+      </div>
+
+      {/* Sidebar */}
       <motion.aside
-        className="sidebar"
-        animate={{ x: sidebarX }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+        initial={false}
+        animate={{ x: isSidebarOpen ? 0 : -280 }}
+        transition={{ duration: 0.35, ease: [0.16, 1, 0.3, 1] }}
+        className="w-64 h-screen fixed top-0 left-0 flex flex-col p-7 z-40"
+        style={{
+          background: "var(--surface)",
+          borderRight: "1px solid var(--line)",
+        }}
       >
-        <div className="sidebar-logo">
-          <span className="dot" />
-          ADESU-FLS
+        <div className="flex items-center gap-3 mb-10">
+          <div
+            className="w-11 h-11 rounded-sm overflow-hidden flex-shrink-0"
+            style={{ border: "1px solid var(--line)" }}
+          >
+            <img
+              src="/assets/fls2.jpg"
+              alt="ADESU-FLS"
+              className="w-full h-full object-cover"
+              loading="lazy"
+            />
+          </div>
+          <div>
+            <p
+              style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+              className="text-lg leading-none flex items-center"
+            >
+              ADESU-FLS
+              <motion.span
+                className="inline-block w-[2px] h-4 ml-1"
+                style={{ background: "var(--accent)" }}
+                animate={{ opacity: [1, 0, 1] }}
+                transition={{ duration: 1, repeat: Infinity }}
+              />
+            </p>
+            <p
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-muted)",
+              }}
+              className="text-[11px] tracking-wide mt-1"
+            >
+              Architecte logiciel
+            </p>
+          </div>
         </div>
 
-        <nav style={{ flex: 1 }}>
-          {[
-            { href: "#home", icon: "⌂", label: "Home" },
-            { href: "#about", icon: "◎", label: "About" },
-            { href: "#projects", icon: "⬡", label: "Projects" },
-            { href: "#skills", icon: "⚡", label: "Skills" },
-            { href: "#contact", icon: "✉", label: "Contact" },
-            { href: "#cv", icon: "↓", label: "CV" },
-          ].map((item) => (
-            <a
-              key={item.href}
-              href={item.href}
-              className="nav-link"
-              onClick={() => window.innerWidth < 768 && setIsSidebarOpen(false)}
-            >
-              <span
-                className="nav-icon"
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "0.85rem",
-                  color: "var(--accent)",
-                }}
-              >
-                {item.icon}
-              </span>
-              {item.label}
-            </a>
-          ))}
+        <nav className="flex-grow">
+          <ul className="space-y-1">
+            {navItems.map((item) => (
+              <li key={item.href}>
+                <a
+                  href={item.href}
+                  onClick={() =>
+                    window.innerWidth < 768 && setIsSidebarOpen(false)
+                  }
+                  className="group flex items-center gap-3 px-3 py-2.5 rounded-sm transition-colors duration-200"
+                  style={{ color: "var(--text-muted)" }}
+                  onMouseEnter={(e) =>
+                    (e.currentTarget.style.color = "var(--text)")
+                  }
+                  onMouseLeave={(e) =>
+                    (e.currentTarget.style.color = "var(--text-muted)")
+                  }
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono)",
+                      color: "var(--accent)",
+                    }}
+                    className="text-[11px]"
+                  >
+                    {item.num}
+                  </span>
+                  <span className="text-sm font-medium">{item.label}</span>
+                </a>
+              </li>
+            ))}
+          </ul>
         </nav>
 
-        <div className="sidebar-socials">
+        <div
+          className="flex items-center gap-4 pt-6"
+          style={{ borderTop: "1px solid var(--line)" }}
+        >
           <a
             href="https://www.linkedin.com/in/kokouvi-fran%C3%A7ois-adesu-179347290/"
-            className="social-btn"
             aria-label="LinkedIn"
+            style={{ color: "var(--text-muted)" }}
           >
-            <Linkedin size={14} />
+            <Linkedin size={18} />
           </a>
           <a
             href="https://github.com/adekomen"
-            className="social-btn"
             aria-label="GitHub"
+            style={{ color: "var(--text-muted)" }}
           >
-            <Github size={14} />
+            <Github size={18} />
           </a>
           <a
             href="mailto:k.francoisadesu@gmail.com"
-            className="social-btn"
             aria-label="Email"
+            style={{ color: "var(--text-muted)" }}
           >
-            <Mail size={14} />
+            <Mail size={18} />
           </a>
+          <button
+            onClick={toggleTheme}
+            aria-label="Basculer le thème"
+            className="ml-auto"
+            style={{ color: "var(--accent)" }}
+          >
+            {isLight ? <Moon size={18} /> : <Sun size={18} />}
+          </button>
         </div>
       </motion.aside>
 
-      {/* Mobile overlay */}
-      {isSidebarOpen && window.innerWidth < 768 && (
-        <div
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.5)",
-            zIndex: 35,
-          }}
-          onClick={() => setIsSidebarOpen(false)}
-        />
-      )}
+      {isSidebarOpen &&
+        typeof window !== "undefined" &&
+        window.innerWidth < 768 && (
+          <div
+            className="fixed inset-0 z-30 md:hidden"
+            style={{ background: "rgba(0,0,0,0.5)" }}
+            onClick={() => setIsSidebarOpen(false)}
+          />
+        )}
 
-      {/* ── TOPBAR ── */}
-      <motion.nav
-        className="topbar"
-        animate={{ left: mainML }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+      {/* Contenu principal */}
+      <div
+        className={`flex-1 relative flex flex-col ${isSidebarOpen ? "md:ml-64" : "ml-0"}`}
       >
-        <button
-          className="hamburger"
-          style={{ display: "flex" }}
-          onClick={() => setIsSidebarOpen((v) => !v)}
-          aria-label="Menu"
-        >
-          {isSidebarOpen ? <X size={18} /> : <Menu size={18} />}
-        </button>
-        <span className="topbar-quote">
-          // Codez vos rêves, construisez l'avenir
-        </span>
-        <button
-          className="theme-toggle"
-          onClick={() => setTheme((t) => (t === "dark" ? "light" : "dark"))}
-        >
-          {theme === "dark" ? "☀️" : "🌙"}{" "}
-          <span style={{ fontSize: "0.75rem" }}>
-            {theme === "dark" ? "Light" : "Dark"}
-          </span>
-        </button>
-      </motion.nav>
+        {particlesReady && (
+          <Particles
+            id="tsparticles"
+            particlesLoaded={particlesLoaded}
+            options={{
+              fullScreen: { enable: false },
+              background: { color: { value: "transparent" } },
+              particles: {
+                number: {
+                  value: 30,
+                  density: { enable: true, width: 800, height: 800 },
+                },
+                color: { value: "#E8A23D" },
+                shape: { type: "circle" },
+                opacity: { value: 0.18 },
+                size: { value: { min: 1, max: 2 } },
+                move: {
+                  enable: true,
+                  speed: 0.4,
+                  direction: "none",
+                  outModes: { default: "out" },
+                },
+              },
+            }}
+            className="absolute inset-0 z-0 pointer-events-none"
+          />
+        )}
 
-      {/* ── MAIN CONTENT ── */}
-      <motion.div
-        className="main-content"
-        animate={{ marginLeft: mainML }}
-        transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-      >
-        {/* ── HERO ── */}
-        <section id="home" className="hero">
-          <div className="hero-glow" />
-          <div className="hero-glow2" />
-          <div className="hero-grid">
+        {/* ===== HERO ===== */}
+        <section
+          id="home"
+          className="min-h-screen flex items-center relative z-10 px-6 md:px-16 py-24"
+        >
+          <div className="w-full max-w-5xl mx-auto grid md:grid-cols-[1.3fr_1fr] gap-12 items-center">
             <motion.div
-              initial={{ opacity: 0, y: 30 }}
+              initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.7 }}
             >
-              <p className="hero-eyebrow">👋 Bienvenue sur mon portfolio</p>
-              <h1 className="hero-name">
-                Kokouvi François
-                <br />
-                ADESU
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--accent)",
+                }}
+                className="text-xs tracking-[0.25em] uppercase mb-6"
+              >
+                Portfolio — Build v2026
+              </p>
+              <h1
+                style={{ fontFamily: "var(--font-display)", lineHeight: 1.05 }}
+                className="text-5xl md:text-7xl font-semibold mb-6"
+              >
+                Kokouvi François{" "}
+                <span style={{ color: "var(--accent)" }}>Adesu</span>
               </h1>
-              <p className="hero-role">
-                <span style={{ color: "var(--accent)" }}>$ </span>
-                {typedRole}
-                <span className="cursor" />
+              <p
+                className="text-lg md:text-xl mb-2"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Architecte logiciel. Je conçois des systèmes web et mobile
+                pensés pour durer — du diagramme UML au déploiement.
               </p>
-              <p className="hero-desc">
-                Architecte logiciel basé à Lomé, Togo. Je construis des
-                expériences web et mobile élégantes, du backend robuste aux
-                interfaces modernes.
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--text-muted)",
+                }}
+                className="text-sm mb-10"
+              >
+                React · Node.js · Flutter · Laravel · PHP
               </p>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
-                <a href="#projects" className="hero-cta">
-                  Voir mes projets <ExternalLink size={14} />
-                </a>
-                <a href="#contact" className="hero-cta-ghost">
-                  Me contacter →
-                </a>
+              <div className="flex flex-wrap gap-4">
+                <motion.a
+                  href="#projects"
+                  whileHover={{ x: 4 }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-sm font-medium text-sm"
+                  style={{ background: "var(--accent)", color: "#0B0D12" }}
+                >
+                  Découvrir mes projets <ArrowUpRight size={16} />
+                </motion.a>
+                <motion.a
+                  href="#contact"
+                  whileHover={{ x: 4 }}
+                  className="inline-flex items-center gap-2 px-6 py-3 rounded-sm font-medium text-sm"
+                  style={{ border: "1px solid var(--line)" }}
+                >
+                  Me contacter
+                </motion.a>
               </div>
             </motion.div>
 
             <motion.div
-              className="hero-image-wrap"
               initial={{ opacity: 0, scale: 0.96 }}
               animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
+              transition={{ duration: 0.7, delay: 0.15 }}
+              className="relative"
             >
-              <img
-                src="/assets/lesaint2.jpg"
-                alt="François ADESU"
-                loading="lazy"
-              />
+              <div
+                className="aspect-[4/5] rounded-sm overflow-hidden relative"
+                style={{ border: "1px solid var(--line)" }}
+              >
+                <img
+                  src="/assets/lesaint2.jpg"
+                  alt="ADESU-FLS"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+                <div
+                  className="absolute bottom-0 left-0 right-0 px-4 py-3"
+                  style={{ background: "var(--accent)" }}
+                >
+                  <p
+                    style={{ fontFamily: "var(--font-mono)", color: "#0B0D12" }}
+                    className="text-xs tracking-wide"
+                  >
+                    Lomé, Togo — Disponible pour collaborer
+                  </p>
+                </div>
+              </div>
             </motion.div>
           </div>
         </section>
 
-        {/* ── PROJECTS ── */}
+        {/* ===== ABOUT ===== */}
         <section
-          id="projects"
-          className="section"
+          id="about"
+          className="relative z-10 px-6 md:px-16 py-24"
           style={{ background: "var(--surface)" }}
         >
-          <span className="section-big-number">02</span>
-          <div className="section-header">
-            <p className="section-label">// mes réalisations</p>
-            <h2 className="section-title">Projets récents</h2>
-            <div className="section-line" />
-          </div>
-
-          <div className="filter-bar">
-            {uniqueTechs.map((tech) => (
-              <button
-                key={tech}
-                className={`filter-pill ${filter === tech ? "active" : ""}`}
-                onClick={() => {
-                  setFilter(tech);
-                  setCurrentPage(1);
-                }}
-              >
-                {tech}
-              </button>
-            ))}
-          </div>
-
-          <div className="projects-grid">
-            {currentProjects.map((project, i) => (
+          <div className="max-w-5xl mx-auto">
+            <SectionTag index="01" label="À propos" />
+            <div className="grid md:grid-cols-[280px_1fr] gap-10 mb-20">
               <motion.div
-                key={project.id}
-                className="project-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.07 }}
-                onClick={() => setSelectedProject(project)}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+                className="rounded-sm overflow-hidden h-[340px]"
+                style={{ border: "1px solid var(--line)" }}
               >
-                <div className="project-img-wrap">
-                  <img
-                    src={project.image}
-                    alt={project.title}
-                    className="project-img"
-                    loading="lazy"
-                  />
-                  <div className="project-img-overlay">
-                    {project.github && (
-                      <a
-                        href={project.github}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="project-link-chip"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Github size={11} /> GitHub
-                      </a>
-                    )}
-                    {project.demo && (
-                      <a
-                        href={project.demo}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="project-link-chip"
-                        style={{ background: "var(--accent2)" }}
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <ExternalLink size={11} /> Demo
-                      </a>
-                    )}
-                  </div>
-                </div>
-                <div className="project-body">
-                  <div className="project-techs">
-                    {project.technologies.slice(0, 3).map((t) => (
-                      <span key={t} className="tech-badge">
-                        {t}
-                      </span>
-                    ))}
-                    {project.technologies.length > 3 && (
-                      <span className="tech-badge">
-                        +{project.technologies.length - 3}
-                      </span>
-                    )}
-                  </div>
-                  <h3 className="project-title">{project.title}</h3>
-                  <p className="project-desc">{project.description}</p>
+                <img
+                  src="/assets/lesaint4.jpg"
+                  alt="Kokouvi François Adesu"
+                  className="w-full h-full object-cover"
+                  loading="lazy"
+                />
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                viewport={{ once: true }}
+                transition={{ duration: 0.6 }}
+              >
+                <h2
+                  style={{ fontFamily: "var(--font-display)" }}
+                  className="text-3xl font-semibold mb-5"
+                >
+                  Le code comme architecture, pas comme rustine.
+                </h2>
+                <div
+                  className="space-y-4"
+                  style={{ color: "var(--text-muted)" }}
+                >
+                  <p>
+                    Salut, moi c'est{" "}
+                    <strong style={{ color: "var(--text)" }}>
+                      Kokouvi François ADESU
+                    </strong>
+                    , mais tu peux m'appeler François. Développeur passionné,
+                    j'ai un faible pour l'architecture logicielle et les
+                    interfaces qui en jettent vraiment. J'ai déjà plusieurs
+                    projets à mon actif : une plateforme de bibliothèque en
+                    ligne, une app de restauration sous Angular, une app mobile
+                    de suivi d'habitudes avec Flutter...
+                  </p>
+                  <p>
+                    Ce qui me fait vibrer : créer des solutions techniques qui
+                    allient robustesse et simplicité d'usage. J'adore explorer
+                    de nouvelles technos et trouver des moyens innovants de
+                    résoudre des problèmes — notamment en mobile avec Flutter,
+                    où je peux laisser libre cours à ma créativité.
+                  </p>
+                  <p>
+                    Mon approche : comprendre le besoin, concevoir une
+                    architecture modulaire avec UML, puis coder — proprement, de
+                    façon scalable et maintenable. En dehors du dev, je suis sur
+                    un terrain de foot ou en train de rêver à mon prochain
+                    voyage au Qatar.
+                  </p>
                 </div>
               </motion.div>
-            ))}
-          </div>
-
-          {totalPages > 1 && (
-            <div className="pagination">
-              <button
-                className="page-btn"
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage((p) => p - 1)}
-              >
-                <ChevronLeft size={16} />
-              </button>
-              <span className="page-info">
-                Page {currentPage} / {totalPages}
-              </span>
-              <button
-                className="page-btn"
-                disabled={currentPage === totalPages}
-                onClick={() => setCurrentPage((p) => p + 1)}
-              >
-                <ChevronRight size={16} />
-              </button>
             </div>
-          )}
+
+            <h3
+              style={{ fontFamily: "var(--font-display)" }}
+              className="text-2xl font-semibold mb-8"
+            >
+              Mon parcours en développement
+            </h3>
+            <div
+              className="grid md:grid-cols-3 gap-px"
+              style={{ background: "var(--line)" }}
+            >
+              {[
+                {
+                  icon: Code2,
+                  step: "01",
+                  title: "Débuts en programmation",
+                  text: "Initiation aux algorithmes et POO avec Java. Premiers projets web (HTML/CSS/JS) et découverte des bases de données relationnelles.",
+                },
+                {
+                  icon: Layers,
+                  step: "02",
+                  title: "Architecture logicielle",
+                  text: "Conception de systèmes modulaires avec microservices. Expérience avec Docker, API REST. Développement d'applications fullstack.",
+                },
+                {
+                  icon: Smartphone,
+                  step: "03",
+                  title: "Passion web & mobile",
+                  text: "Interfaces dynamiques avec React et Flutter. Intérêt marqué pour les PWA et l'optimisation des performances.",
+                },
+              ].map(({ icon: Icon, step, title, text }) => (
+                <motion.div
+                  key={step}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.5 }}
+                  className="p-6"
+                  style={{ background: "var(--surface)" }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <Icon size={22} style={{ color: "var(--accent)" }} />
+                    <span
+                      style={{
+                        fontFamily: "var(--font-mono)",
+                        color: "var(--text-muted)",
+                      }}
+                      className="text-xs"
+                    >
+                      {step}
+                    </span>
+                  </div>
+                  <h4 className="font-semibold mb-2">{title}</h4>
+                  <p className="text-sm" style={{ color: "var(--text-muted)" }}>
+                    {text}
+                  </p>
+                </motion.div>
+              ))}
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0 }}
+              whileInView={{ opacity: 1 }}
+              viewport={{ once: true }}
+              className="mt-10 p-7 rounded-sm relative overflow-hidden"
+              style={{
+                background: "var(--accent-soft)",
+                border: "1px solid var(--line)",
+              }}
+            >
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--accent)",
+                }}
+                className="text-xs tracking-[0.2em] uppercase mb-3"
+              >
+                Vision
+              </p>
+              <p
+                style={{ fontFamily: "var(--font-display)" }}
+                className="text-xl md:text-2xl leading-snug"
+              >
+                « Concevoir des solutions techniques élégantes qui marient
+                qualité architecturale et expérience utilisateur exceptionnelle.
+                »
+              </p>
+            </motion.div>
+          </div>
+        </section>
+
+        {/* ===== PROJECTS ===== */}
+        <section id="projects" className="relative z-10 px-6 md:px-16 py-24">
+          <div className="max-w-5xl mx-auto">
+            <div className="flex flex-wrap items-end justify-between gap-4 mb-8">
+              <SectionTag index="02" label="Projets" />
+              <select
+                value={filter}
+                onChange={(e) => {
+                  setFilter(e.target.value);
+                  setCurrentPage(1);
+                }}
+                className="px-3 py-2 rounded-sm text-sm"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  color: "var(--text)",
+                }}
+                aria-label="Filtrer par technologie"
+              >
+                <option>Tous</option>
+                {uniqueTechnologies.map((tech) => (
+                  <option key={tech} value={tech}>
+                    {tech}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5">
+              {currentProjects.map((project, i) => (
+                <motion.div
+                  key={project.id}
+                  initial={{ opacity: 0, y: 16 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.4, delay: i * 0.05 }}
+                  whileHover={{ y: -4 }}
+                  onClick={() => setSelectedProject(project)}
+                  className="rounded-sm overflow-hidden cursor-pointer group"
+                  style={{
+                    background: "var(--surface)",
+                    border: "1px solid var(--line)",
+                  }}
+                >
+                  <div className="h-40 overflow-hidden">
+                    <img
+                      src={project.image}
+                      alt={project.title}
+                      className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      loading="lazy"
+                    />
+                  </div>
+                  <div className="p-5">
+                    <h3 className="font-semibold mb-2">{project.title}</h3>
+                    <p
+                      className="text-sm mb-3 line-clamp-2"
+                      style={{ color: "var(--text-muted)" }}
+                    >
+                      {project.description}
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {project.technologies.slice(0, 3).map((t) => (
+                        <span
+                          key={t}
+                          style={{
+                            fontFamily: "var(--font-mono)",
+                            color: "var(--text-muted)",
+                          }}
+                          className="text-[10px]"
+                        >
+                          {t}
+                          {project.technologies.indexOf(t) < 2 &&
+                          project.technologies.length > 1
+                            ? " ·"
+                            : ""}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+
+            {totalPages > 1 && (
+              <div className="flex items-center justify-center gap-6 mt-10">
+                <button
+                  onClick={handlePreviousPage}
+                  disabled={currentPage === 1}
+                  className="p-2 rounded-sm disabled:opacity-30"
+                  style={{ border: "1px solid var(--line)" }}
+                  aria-label="Page précédente"
+                >
+                  <ArrowLeft size={16} />
+                </button>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    color: "var(--text-muted)",
+                  }}
+                  className="text-sm"
+                >
+                  {currentPage} / {totalPages}
+                </span>
+                <button
+                  onClick={handleNextPage}
+                  disabled={currentPage === totalPages}
+                  className="p-2 rounded-sm disabled:opacity-30"
+                  style={{ border: "1px solid var(--line)" }}
+                  aria-label="Page suivante"
+                >
+                  <ArrowRight size={16} />
+                </button>
+              </div>
+            )}
+          </div>
 
           <AnimatePresence>
             {selectedProject && (
@@ -1514,292 +983,137 @@ const App: React.FC = () => {
           </AnimatePresence>
         </section>
 
-        {/* ── SKILLS ── */}
-        <section id="skills" className="section">
-          <span className="section-big-number">03</span>
-          <div className="section-header">
-            <p className="section-label">// mon arsenal</p>
-            <h2 className="section-title">Compétences</h2>
-            <div className="section-line" />
-          </div>
-
-          <p
-            style={{
-              fontSize: "0.9rem",
-              color: "var(--text-sub)",
-              maxWidth: "520px",
-              lineHeight: 1.75,
-              marginBottom: "2rem",
-            }}
-          >
-            À travers mon parcours, j'ai exploré et maîtrisé diverses
-            technologies, toujours avec la même curiosité et l'envie de créer
-            des solutions qui ont du sens.
-          </p>
-
-          <div className="skills-grid">
-            {[
-              "JavaScript",
-              "TypeScript",
-              "PHP",
-              "Python",
-              "React",
-              "Angular",
-              "Node.js",
-              "Laravel",
-              "Flutter",
-              "Dart",
-              "MySQL",
-              "MongoDB",
-              "SQL",
-              "Docker",
-              "UML",
-            ].map((skill) => (
-              <motion.span
-                key={skill}
-                className="skill-chip"
-                whileHover={{ y: -3 }}
-                transition={{ type: "spring", stiffness: 300 }}
-              >
-                {skill}
-              </motion.span>
-            ))}
-          </div>
-
-          <div className="journey-cards">
-            {[
-              {
-                icon: <Code size={20} />,
-                color: "#3B82F6",
-                title: "Débuts en Programmation",
-                desc: "Initiation aux algorithmes et POO avec Java. Premiers projets web (HTML/CSS/JS) et découverte des bases de données relationnelles.",
-              },
-              {
-                icon: <Cpu size={20} />,
-                color: "#7B2FBE",
-                title: "Architecture Logicielle",
-                desc: "Conception de systèmes modulaires avec microservices. Expérience avec Docker, API REST. Développement d'applications fullstack.",
-              },
-              {
-                icon: <Smartphone size={20} />,
-                color: "#0FF4C6",
-                title: "Passion Web/Mobile",
-                desc: "Création d'interfaces dynamiques avec React et Flutter. Intérêt pour les PWA et l'optimisation des performances mobiles.",
-              },
-            ].map((card, i) => (
-              <motion.div
-                key={i}
-                className="journey-card"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 + 0.2 }}
-              >
-                <div
-                  className="journey-icon"
-                  style={{ background: `${card.color}18` }}
-                >
-                  <span style={{ color: card.color }}>{card.icon}</span>
-                </div>
-                <h3>{card.title}</h3>
-                <p>{card.desc}</p>
-              </motion.div>
-            ))}
-          </div>
-        </section>
-
-        {/* ── ABOUT ── */}
+        {/* ===== SKILLS ===== */}
         <section
-          id="about"
-          className="section"
+          id="skills"
+          className="relative z-10 px-6 md:px-16 py-24"
           style={{ background: "var(--surface)" }}
         >
-          <span className="section-big-number">04</span>
-          <div className="section-header">
-            <p className="section-label">// qui suis-je ?</p>
-            <h2 className="section-title">À propos de moi</h2>
-            <div className="section-line" />
-          </div>
-
-          <div className="about-grid">
-            <motion.div
-              className="about-photo"
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6 }}
+          <div className="max-w-5xl mx-auto">
+            <SectionTag index="03" label="Compétences" />
+            <p
+              className="max-w-xl mb-10"
+              style={{ color: "var(--text-muted)" }}
             >
-              <img
-                src="/assets/lesaint4.jpg"
-                alt="François ADESU"
-                loading="lazy"
-              />
-            </motion.div>
-
-            <motion.div
-              className="about-text"
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.6, delay: 0.1 }}
-            >
-              <p>
-                Salut, moi c'est <strong>Kokouvi François ADESU</strong>, mais
-                tu peux m'appeler François ! Je suis un développeur passionné
-                avec un faible pour l'architecture logicielle et les interfaces
-                utilisateur qui en jettent.
-              </p>
-              <p>
-                Ce qui me fait vibrer, c'est de créer des solutions techniques
-                qui allient robustesse et simplicité d'utilisation. J'adore
-                explorer de nouvelles technos et trouver des moyens innovants
-                pour résoudre des problèmes — et je prends un vrai plaisir à
-                développer des apps mobiles avec Flutter.
-              </p>
-              <p>
-                Mon approche ? Je commence toujours par comprendre les besoins,
-                puis je conçois une architecture modulaire avant de plonger dans
-                le code. En dehors du dev, tu me trouveras probablement en train
-                de suivre des séries, sur un terrain de foot ou de rêver à mon
-                prochain voyage.
-              </p>
-
-              <div className="vision-banner">
-                <h3>Vision</h3>
-                <p>
-                  "Concevoir des solutions techniques élégantes qui marient
-                  qualité architecturale et expérience utilisateur
-                  exceptionnelle, particulièrement dans les domaines web et
-                  mobile."
-                </p>
-              </div>
-            </motion.div>
+              À travers mon parcours, j'ai exploré et maîtrisé diverses
+              technologies, toujours avec la même curiosité et l'envie de créer
+              des solutions qui ont du sens.
+            </p>
+            <div className="flex flex-wrap gap-3">
+              {skills.map((skill, i) => (
+                <motion.span
+                  key={skill}
+                  initial={{ opacity: 0, y: 10 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ duration: 0.3, delay: i * 0.03 }}
+                  whileHover={{
+                    borderColor: "var(--accent)",
+                    color: "var(--accent)",
+                  }}
+                  className="px-4 py-2 rounded-sm text-sm transition-colors duration-200"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    border: "1px solid var(--line)",
+                    color: "var(--text-muted)",
+                  }}
+                >
+                  {skill}
+                </motion.span>
+              ))}
+            </div>
           </div>
         </section>
 
-        {/* ── CONTACT ── */}
-        <section id="contact" className="section">
-          <span className="section-big-number">05</span>
-          <div className="section-header">
-            <p className="section-label">// travaillons ensemble</p>
-            <h2 className="section-title">Me contacter</h2>
-            <div className="section-line" />
-          </div>
-
-          <div className="contact-layout">
-            <div className="contact-info">
-              <h3>Discutons de votre projet</h3>
-              <p>
-                Envie de collaborer, de discuter tech ou d'explorer une
-                opportunité ? Je suis disponible et toujours enthousiaste à
-                l'idée de nouveaux défis.
-              </p>
-              <div className="contact-links">
-                <a href="tel:+22899553976" className="contact-link">
-                  <Phone size={16} /> (+228) 99 55 39 76
-                </a>
-                <a
-                  href="https://wa.me/+22946620072"
-                  className="contact-link"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <FaWhatsapp size={16} style={{ color: "var(--accent)" }} />{" "}
-                  Chat sur WhatsApp
-                </a>
-                <a
-                  href="mailto:k.francoisadesu@gmail.com"
-                  className="contact-link"
-                >
-                  <Mail size={16} /> k.francoisadesu@gmail.com
-                </a>
-              </div>
-            </div>
-
-            <form
-              onSubmit={handleSubmit}
-              style={{
-                background: "var(--surface)",
-                border: "1px solid var(--border)",
-                borderRadius: "16px",
-                padding: "2rem",
-              }}
+        {/* ===== CONTACT ===== */}
+        <section id="contact" className="relative z-10 px-6 md:px-16 py-24">
+          <div className="max-w-2xl mx-auto">
+            <SectionTag index="04" label="Contact" />
+            <h2
+              style={{ fontFamily: "var(--font-display)" }}
+              className="text-3xl font-semibold mb-3"
             >
-              <div className="form-group">
-                <label className="form-label">Nom</label>
-                <input
-                  className="form-input"
-                  type="text"
-                  placeholder="Votre nom"
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, name: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Email</label>
-                <input
-                  className="form-input"
-                  type="email"
-                  placeholder="vous@exemple.com"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, email: e.target.value }))
-                  }
-                />
-              </div>
-              <div className="form-group">
-                <label className="form-label">Message</label>
-                <textarea
-                  className="form-textarea"
-                  placeholder="Décrivez votre projet ou votre demande…"
-                  value={formData.message}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, message: e.target.value }))
-                  }
-                  rows={5}
-                />
-              </div>
+              Envie de collaborer ?
+            </h2>
+            <p className="mb-8" style={{ color: "var(--text-muted)" }}>
+              Discutons de votre projet, d'une idée, ou simplement de tech.
+            </p>
+            <form onSubmit={handleFormSubmit} className="space-y-4">
+              <input
+                type="text"
+                placeholder="Votre nom"
+                value={formData.name}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, name: e.target.value }))
+                }
+                className="w-full p-3 rounded-sm text-sm focus:outline-none"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  color: "var(--text)",
+                }}
+                aria-label="Nom"
+              />
+              <input
+                type="email"
+                placeholder="Votre email"
+                value={formData.email}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, email: e.target.value }))
+                }
+                className="w-full p-3 rounded-sm text-sm focus:outline-none"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  color: "var(--text)",
+                }}
+                aria-label="Email"
+              />
+              <textarea
+                placeholder="Votre message"
+                value={formData.message}
+                onChange={(e) =>
+                  setFormData((p) => ({ ...p, message: e.target.value }))
+                }
+                rows={4}
+                className="w-full p-3 rounded-sm text-sm focus:outline-none resize-none"
+                style={{
+                  background: "var(--surface)",
+                  border: "1px solid var(--line)",
+                  color: "var(--text)",
+                }}
+                aria-label="Message"
+              />
               <button
                 type="submit"
-                className="form-submit"
                 disabled={isSubmitting}
+                className="w-full py-3 rounded-sm font-medium text-sm flex items-center justify-center gap-2"
+                style={{ background: "var(--accent)", color: "#0B0D12" }}
               >
                 {isSubmitting && (
-                  <svg
-                    style={{
-                      animation: "spin 1s linear infinite",
-                      width: 16,
-                      height: 16,
-                    }}
-                    viewBox="0 0 24 24"
-                  >
+                  <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
                     <circle
+                      className="opacity-25"
                       cx="12"
                       cy="12"
                       r="10"
                       stroke="currentColor"
                       strokeWidth="4"
-                      style={{ opacity: 0.25 }}
                       fill="none"
                     />
                     <path
+                      className="opacity-75"
                       fill="currentColor"
-                      style={{ opacity: 0.75 }}
                       d="M4 12a8 8 0 018-8v4a4 4 0 00-4 4H4z"
                     />
                   </svg>
                 )}
-                {isSubmitting ? "Envoi…" : "Envoyer le message →"}
+                {isSubmitting ? "Envoi..." : "Envoyer le message"}
               </button>
               {formStatus && (
                 <p
-                  style={{
-                    marginTop: "1rem",
-                    fontSize: "0.83rem",
-                    color: formStatus.includes("succès")
-                      ? "var(--accent)"
-                      : "#ff6b6b",
-                    textAlign: "center",
-                  }}
+                  className="text-sm text-center"
+                  style={{ color: "var(--text-muted)" }}
                 >
                   {formStatus}
                 </p>
@@ -1808,118 +1122,164 @@ const App: React.FC = () => {
           </div>
         </section>
 
-        {/* ── CV ── */}
+        {/* ===== CV ===== */}
         <section
           id="cv"
-          className="section"
+          className="relative z-10 px-6 md:px-16 py-24"
           style={{ background: "var(--surface)" }}
         >
-          <span className="section-big-number">06</span>
-          <div className="section-header">
-            <p className="section-label">// mon parcours</p>
-            <h2 className="section-title">Curriculum Vitæ</h2>
-            <div className="section-line" />
-          </div>
-
-          <div className="cv-section">
-            <motion.div
-              className="cv-card"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
+          <div className="max-w-2xl mx-auto text-center">
+            <SectionTag index="05" label="CV" />
+            <h2
+              style={{ fontFamily: "var(--font-display)" }}
+              className="text-3xl font-semibold mb-3"
             >
-              <div style={{ fontSize: "2.5rem", marginBottom: "1rem" }}>📄</div>
-              <h3>ADESU François — CV</h3>
-              <p>Développeur Full-Stack & Mobile · Architecte logiciel</p>
-              <div className="cv-btns">
-                <button
-                  className="cv-btn cv-btn-primary"
-                  onClick={() =>
-                    window.open(
-                      "/assets/ADESU_CV.pdf",
-                      "_blank",
-                      "noopener,noreferrer",
-                    )
+              Mon parcours, en détail
+            </h2>
+            <p className="mb-8" style={{ color: "var(--text-muted)" }}>
+              Consultez ou téléchargez mon CV pour découvrir mon parcours et mes
+              compétences.
+            </p>
+            <div className="flex flex-wrap justify-center gap-4">
+              <button
+                onClick={() => {
+                  setShowPDF(true);
+                  const newWindow = window.open(
+                    "/assets/ADESU_CV.pdf",
+                    "_blank",
+                    "noopener,noreferrer",
+                  );
+                  if (!newWindow) {
+                    alert(
+                      "L'ouverture du CV a été bloquée. Autorisez les pop-ups pour ce site ou utilisez le lien de téléchargement.",
+                    );
                   }
-                >
-                  <ExternalLink size={14} /> Ouvrir le CV
-                </button>
-                <a
-                  href="/assets/ADESU_CV.pdf"
-                  download
-                  className="cv-btn cv-btn-outline"
-                >
-                  ↓ Télécharger
-                </a>
-              </div>
-            </motion.div>
+                }}
+                className="px-6 py-3 rounded-sm font-medium text-sm"
+                style={{ border: "1px solid var(--line)" }}
+              >
+                Afficher le CV
+              </button>
+              <a
+                href="/assets/ADESU_CV.pdf"
+                download
+                className="px-6 py-3 rounded-sm font-medium text-sm inline-flex items-center gap-2"
+                style={{ background: "var(--accent)", color: "#0B0D12" }}
+              >
+                Télécharger mon CV <ArrowUpRight size={14} />
+              </a>
+            </div>
+            {showPDF && (
+              <p
+                className="text-sm mt-5"
+                style={{ color: "var(--text-muted)" }}
+              >
+                Le CV a été ouvert dans un nouvel onglet.
+              </p>
+            )}
           </div>
         </section>
 
-        {/* ── FOOTER ── */}
-        <footer className="footer">
-          <div className="footer-inner">
-            <div className="footer-brand">
-              <h3>ADESU-FLS</h3>
-              <p>
+        {/* ===== FOOTER ===== */}
+        <footer
+          className="relative z-10 px-6 md:px-16 py-14"
+          style={{
+            borderTop: "1px solid var(--line)",
+            background: "var(--bg)",
+          }}
+        >
+          <div className="max-w-5xl mx-auto grid md:grid-cols-3 gap-10 text-sm">
+            <div>
+              <p
+                style={{ fontFamily: "var(--font-display)", fontWeight: 600 }}
+                className="text-lg mb-2"
+              >
+                ADESU-FLS
+              </p>
+              <p style={{ color: "var(--text-muted)" }}>
                 Développeur passionné, spécialisé en architecture logicielle et
-                UX moderne. Basé à Lomé, Togo.
+                UX moderne.
               </p>
             </div>
             <div>
-              <h4>Me contacter</h4>
-              <a href="tel:+22899553976" className="footer-link">
-                <Phone size={13} /> (+228) 99 55 39 76
-              </a>
-              <a
-                href="https://wa.me/+22946620072"
-                className="footer-link"
-                target="_blank"
-                rel="noopener noreferrer"
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--accent)",
+                }}
+                className="text-xs tracking-[0.2em] uppercase mb-3"
               >
-                <FaWhatsapp size={13} /> WhatsApp
-              </a>
-              <a
-                href="mailto:k.francoisadesu@gmail.com"
-                className="footer-link"
+                Contact
+              </p>
+              <div
+                className="flex flex-col gap-2"
+                style={{ color: "var(--text-muted)" }}
               >
-                <Mail size={13} /> k.francoisadesu@gmail.com
-              </a>
+                <a
+                  href="tel:+22899553976"
+                  className="flex items-center gap-2 hover:opacity-80"
+                >
+                  <Phone size={14} /> (+228) 99 55 39 76
+                </a>
+                <a
+                  href="https://wa.me/+22946620072?text=Salut%20François,%20je%20viens%20de%20voir%20ton%20portfolio%20et%20j'aimerais%20discuter%20d'un%20projet%20!"
+                  className="flex items-center gap-2 hover:opacity-80"
+                >
+                  <FaWhatsapp size={14} /> Chat sur WhatsApp
+                </a>
+                <a
+                  href="mailto:k.francoisadesu@gmail.com"
+                  className="flex items-center gap-2 hover:opacity-80"
+                >
+                  <Mail size={14} /> k.francoisadesu@gmail.com
+                </a>
+              </div>
             </div>
             <div>
-              <h4>Liens</h4>
-              <a
-                href="https://github.com/adekomen"
-                className="footer-link"
-                target="_blank"
-                rel="noopener noreferrer"
+              <p
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  color: "var(--accent)",
+                }}
+                className="text-xs tracking-[0.2em] uppercase mb-3"
               >
-                <Github size={13} /> GitHub
-              </a>
-              <a
-                href="https://www.linkedin.com/in/kokouvi-fran%C3%A7ois-adesu-179347290/"
-                className="footer-link"
-                target="_blank"
-                rel="noopener noreferrer"
+                Liens
+              </p>
+              <div
+                className="flex flex-col gap-2"
+                style={{ color: "var(--text-muted)" }}
               >
-                <Linkedin size={13} /> LinkedIn
-              </a>
-              <a
-                href="https://github.com/adekomen/portfolio.git"
-                className="footer-link"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                <Code size={13} /> Code source
-              </a>
+                <a
+                  href="https://github.com/adekomen/portfolio.git"
+                  className="flex items-center gap-2 hover:opacity-80"
+                >
+                  <Github size={14} /> Code source
+                </a>
+                <a
+                  href="https://www.linkedin.com/in/kokouvi-fran%C3%A7ois-adesu-179347290/"
+                  className="flex items-center gap-2 hover:opacity-80"
+                >
+                  <Linkedin size={14} /> LinkedIn
+                </a>
+              </div>
             </div>
           </div>
-          <div className="footer-bottom">
-            © {new Date().getFullYear()} <span>ADESU-FLS</span> · Tous droits
-            réservés · Fait avec ♥ à Lomé
+          <div
+            className="max-w-5xl mx-auto mt-10 pt-6 text-center"
+            style={{ borderTop: "1px solid var(--line)" }}
+          >
+            <p
+              style={{
+                fontFamily: "var(--font-mono)",
+                color: "var(--text-muted)",
+              }}
+              className="text-xs"
+            >
+              © {new Date().getFullYear()} ADESU-FLS — Tous droits réservés.
+            </p>
           </div>
         </footer>
-      </motion.div>
+      </div>
     </div>
   );
 };
